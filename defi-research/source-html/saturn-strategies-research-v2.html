@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saturn Strategies - 产品调研汇总</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #e5e5e5;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      min-height: 100vh;
+      padding: 56px 72px;
+    }
+    .header { margin-bottom: 42px; }
+    .header-tag {
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .header h1 {
+      font-size: 36px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.8px;
+    }
+    .header p {
+      margin-top: 12px;
+      font-size: 15px;
+      color: #666;
+      max-width: 820px;
+      line-height: 1.7;
+    }
+    .section-title {
+      font-size: 12px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #555;
+      margin: 4px 0 16px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+    .summary-card {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .summary-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .summary-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+    }
+    .summary-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .protocol-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .proto-card {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .proto-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .proto-count {
+      color: #666;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .proto-max {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .table-wrapper {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 36px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      padding: 14px 18px;
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #444;
+      border-bottom: 1px solid #1a1a1a;
+      background: #111;
+    }
+    tbody tr {
+      border-bottom: 1px solid #171717;
+      transition: background 0.12s ease;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #141414; }
+    td {
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #cfcfcf;
+      vertical-align: middle;
+    }
+    td.rank {
+      color: #3a3a3a;
+      width: 56px;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    .name { color: #fff; font-weight: 500; }
+    .token-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot-usdat { background: #f97316; }
+    .dot-susdat { background: #6366f1; }
+
+    .protocol-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .protocol-saturn { background: rgba(249, 115, 22, 0.12); color: #f97316; }
+    .protocol-curve { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
+    .protocol-pendle { background: rgba(34, 211, 238, 0.12); color: #22d3ee; }
+    .protocol-morpho { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+    .protocol-strata { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+
+    .action-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: #1a1a1a;
+      color: #8a8a8a;
+    }
+    .points { font-weight: 700; }
+    .points-high { color: #ef4444; }
+    .points-mid { color: #f59e0b; }
+    .points-low { color: #6b7280; }
+
+    .insights {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .insight-card {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .insight-title {
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .insight-body {
+      color: #666;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .highlight-orange { color: #f97316; font-weight: 600; }
+    .highlight-cyan { color: #22d3ee; font-weight: 600; }
+    .highlight-green { color: #10b981; font-weight: 600; }
+
+    .footer {
+      margin-top: 42px;
+      padding-top: 18px;
+      border-top: 1px solid #1a1a1a;
+      color: #3d3d3d;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-tag">产品调研 · Saturn Credit</div>
+    <h1>Strategies 积分策略分析（Epoch 1）</h1>
+    <p>基于 Saturn Strategies 页面整理。该页聚焦 USDat / sUSDat 在 Saturn、Curve、Pendle、Morpho、Strata 的积分路线，以下为统一风格汇总版。</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-card">
+      <div class="summary-label">总策略数</div>
+      <div class="summary-value">18</div>
+      <div class="summary-sub">覆盖 5 个协议生态</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">最高积分倍率</div>
+      <div class="summary-value" style="color:#f97316;">30×</div>
+      <div class="summary-sub">Pendle Hold yt-USDat</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">代币类型</div>
+      <div class="summary-value">2</div>
+      <div class="summary-sub">USDat · sUSDat</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">动作类型</div>
+      <div class="summary-value">5</div>
+      <div class="summary-sub">Buy · Stake · LP · Lend · Hold</div>
+    </div>
+  </div>
+
+  <div class="section-title">协议分布与峰值</div>
+  <div class="protocol-grid">
+    <div class="proto-card">
+      <div class="proto-name" style="color:#f97316;">Saturn</div>
+      <div class="proto-count">2 routes</div>
+      <div class="proto-max" style="color:#f97316;">7×</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-name" style="color:#818cf8;">Curve</div>
+      <div class="proto-count">4 routes</div>
+      <div class="proto-max" style="color:#818cf8;">20×</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-name" style="color:#22d3ee;">Pendle</div>
+      <div class="proto-count">8 routes</div>
+      <div class="proto-max" style="color:#22d3ee;">30×</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-name" style="color:#10b981;">Morpho</div>
+      <div class="proto-count">2 routes</div>
+      <div class="proto-max" style="color:#10b981;">2×</div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-name" style="color:#fbbf24;">Strata</div>
+      <div class="proto-count">2 routes</div>
+      <div class="proto-max" style="color:#fbbf24;">3×</div>
+    </div>
+  </div>
+
+  <div class="section-title">全量策略表</div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Route</th>
+          <th>Token</th>
+          <th>Protocol</th>
+          <th>Action</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="rank">01</td><td class="name">Hold USDat</td><td><span class="token-badge"><span class="dot dot-usdat"></span>USDat</span></td><td><span class="protocol-badge protocol-saturn">Saturn</span></td><td><span class="action-badge">Buy</span></td><td class="points points-low">7×</td></tr>
+        <tr><td class="rank">02</td><td class="name">Hold sUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-saturn">Saturn</span></td><td><span class="action-badge">Stake</span></td><td class="points points-low">1×</td></tr>
+        <tr><td class="rank">03</td><td class="name">Curve LP - USDC/USDat</td><td><span class="token-badge"><span class="dot dot-usdat"></span>USDat</span></td><td><span class="protocol-badge protocol-curve">Curve</span></td><td><span class="action-badge">LP</span></td><td class="points points-high">20×</td></tr>
+        <tr><td class="rank">04</td><td class="name">Stake Curve LP - USDC / USDat</td><td><span class="token-badge"><span class="dot dot-usdat"></span>USDat</span></td><td><span class="protocol-badge protocol-curve">Curve</span></td><td><span class="action-badge">Stake</span></td><td class="points points-high">20×</td></tr>
+        <tr><td class="rank">05</td><td class="name">Curve LP - USDC/sUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-curve">Curve</span></td><td><span class="action-badge">LP</span></td><td class="points points-mid">18×</td></tr>
+        <tr><td class="rank">06</td><td class="name">Stake Curve LP - USDC / sUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-curve">Curve</span></td><td><span class="action-badge">Stake</span></td><td class="points points-mid">18×</td></tr>
+        <tr><td class="rank">07</td><td class="name">Pendle LP - USDat</td><td><span class="token-badge"><span class="dot dot-usdat"></span>USDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">LP</span></td><td class="points points-mid">15×</td></tr>
+        <tr><td class="rank">08</td><td class="name">Pendle Hold yt-USDat</td><td><span class="token-badge"><span class="dot dot-usdat"></span>USDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">Buy</span></td><td class="points points-high">30×</td></tr>
+        <tr><td class="rank">09</td><td class="name">Pendle LP - sUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">LP</span></td><td class="points points-low">5×</td></tr>
+        <tr><td class="rank">10</td><td class="name">Pendle Hold yt-sUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">Buy</span></td><td class="points points-mid">10×</td></tr>
+        <tr><td class="rank">11</td><td class="name">Pendle LP - srUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">Buy</span></td><td class="points points-low">7.5×</td></tr>
+        <tr><td class="rank">12</td><td class="name">Pendle Hold yt-srUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">Buy</span></td><td class="points points-mid">15×</td></tr>
+        <tr><td class="rank">13</td><td class="name">Pendle LP - jrUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">Buy</span></td><td class="points points-low">5×</td></tr>
+        <tr><td class="rank">14</td><td class="name">Pendle Hold yt-jrUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-pendle">Pendle</span></td><td><span class="action-badge">Buy</span></td><td class="points points-mid">10×</td></tr>
+        <tr><td class="rank">15</td><td class="name">Supply sUSDat as Collateral</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-morpho">Morpho</span></td><td><span class="action-badge">Lend</span></td><td class="points points-low">2×</td></tr>
+        <tr><td class="rank">16</td><td class="name">Lend AUSD</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-morpho">Morpho</span></td><td><span class="action-badge">Lend</span></td><td class="points points-low">1×</td></tr>
+        <tr><td class="rank">17</td><td class="name">Hold srUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-strata">Strata</span></td><td><span class="action-badge">Hold</span></td><td class="points points-low">1×</td></tr>
+        <tr><td class="rank">18</td><td class="name">Hold jrUSDat</td><td><span class="token-badge"><span class="dot dot-susdat"></span>sUSDat</span></td><td><span class="protocol-badge protocol-strata">Strata</span></td><td><span class="action-badge">Hold</span></td><td class="points points-low">3×</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">调研观察</div>
+  <div class="insights">
+    <div class="insight-card">
+      <div class="insight-title">高倍率集中在 Pendle / Curve</div>
+      <div class="insight-body">
+        峰值路线由 <span class="highlight-orange">Pendle yt-USDat (30×)</span> 与 Curve 的
+        20× 池子驱动。若以积分效率优先，路线选择会明显偏向这两个协议。
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-title">基础参与门槛与稳健路线</div>
+      <div class="insight-body">
+        Saturn 原生持有与 Morpho 借贷路线倍率较低，但结构更直观，适合稳健或初期参与者；
+        可作为高倍率策略的风险对冲仓位。
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-title">Token 重心偏向 sUSDat</div>
+      <div class="insight-body">
+        路线数量里 sUSDat 占比更高，尤其在 Pendle / Strata 下覆盖更完整，说明策略层的组合扩展更偏向
+        <span class="highlight-cyan">收益分层与衍生结构</span>。
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-title">策略组合建议（研究视角）</div>
+      <div class="insight-body">
+        可采用“Curve 低风险底仓 + Pendle 高倍率机会仓 + Morpho 稳健补充”的分层框架，提高积分效率同时控制波动暴露。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Source: https://app.saturn.credit/strategies · Generated in research style.
+  </div>
+</body>
+</html>

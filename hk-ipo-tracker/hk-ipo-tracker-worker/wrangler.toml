@@ -1,0 +1,15 @@
+name = "hk-ipo-tracker"
+main = "src/index.ts"
+compatibility_date = "2026-05-13"
+
+# 静态页（已去掉网页内嵌密码，由 Worker 校验）
+# 必须为 true，否则静态文件会绕过 Worker，密码将失效
+[assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = true
+
+# ── 在线「保存到云端」使用 Workers KV ───────────────────────────────
+[[kv_namespaces]]
+binding = "IPO_KV"
+id = "0997663fce9c48e3af47b59c941a4be6"

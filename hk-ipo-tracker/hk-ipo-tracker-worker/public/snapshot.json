@@ -1,0 +1,290 @@
+{
+  "version": 1,
+  "exportedAt": "2026-05-20T07:28:35.394Z",
+  "ipos": [],
+  "details": [],
+  "funders": [
+    {
+      "id": 1778835889363,
+      "ipoId": null,
+      "ipoName": "",
+      "name": "左哥",
+      "amount": 50000
+    },
+    {
+      "id": 1778835898998,
+      "ipoId": null,
+      "ipoName": "",
+      "name": "邹哥",
+      "amount": 60000
+    }
+  ],
+  "persons": [
+    {
+      "id": 100001,
+      "name": "志坚",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 100002,
+      "name": "李超",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 100003,
+      "name": "小雪",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 100005,
+      "name": "罗浩",
+      "broker": "盈立",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 100006,
+      "name": "小波",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 1778835679848,
+      "name": "均哥1",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 1778835687048,
+      "name": "均哥2",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 1778835698229,
+      "name": "大鑫",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 1778835706413,
+      "name": "小伟",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 1778835738119,
+      "name": "维维",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    },
+    {
+      "id": 1778835794713,
+      "name": "大鑫姐",
+      "broker": "致富",
+      "type": "自有",
+      "note": ""
+    }
+  ],
+  "capitalStats": [
+    {
+      "id": 1747891000001,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "Reaper",
+      "initialFund": 10000,
+      "returnedFund": 9950,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1747891000002,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "志坚",
+      "initialFund": 10000,
+      "returnedFund": 9950,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1747891000003,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "李超",
+      "initialFund": 10000,
+      "returnedFund": 9950,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1747891000004,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "小雪",
+      "initialFund": 10000,
+      "returnedFund": 9950,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1747891000005,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "周维",
+      "initialFund": 10000,
+      "returnedFund": 9950,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1747891000006,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "罗浩",
+      "initialFund": 10000,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -100
+    },
+    {
+      "id": 1747891000008,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "均哥1",
+      "initialFund": 10000,
+      "returnedFund": 9950,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1747891000009,
+      "statDate": "2026-05-15",
+      "project": "翼菲科技",
+      "account": "均哥2",
+      "initialFund": 10000,
+      "returnedFund": 9950,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1747891000010,
+      "project": "翼菲科技",
+      "account": "小伟",
+      "initialFund": 10000,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -1000,
+      "statDate": "2026-05-15"
+    },
+    {
+      "id": 1747891000011,
+      "project": "翼菲科技",
+      "account": "大鑫",
+      "initialFund": 10000,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -1000,
+      "statDate": "2026-05-15"
+    },
+    {
+      "id": 1779094270211,
+      "statDate": "2026-05-18",
+      "project": "驱势科技",
+      "account": "志坚",
+      "initialFund": 9950,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1779094271012,
+      "statDate": "2026-05-18",
+      "project": "驱势科技",
+      "account": "李超",
+      "initialFund": 9950,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1779094272422,
+      "statDate": "2026-05-18",
+      "project": "驱势科技",
+      "account": "小雪",
+      "initialFund": 9950,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1779094272796,
+      "statDate": "2026-05-18",
+      "project": "驱势科技",
+      "account": "小波",
+      "initialFund": 9950,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1779094549596,
+      "statDate": "2026-05-18",
+      "project": "驱势科技",
+      "account": "均哥1",
+      "initialFund": 9950,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1779094579669,
+      "statDate": "2026-05-18",
+      "project": "驱势科技",
+      "account": "均哥2",
+      "initialFund": 9950,
+      "returnedFund": 9900,
+      "result": "未中签",
+      "lots": 0,
+      "profit": -50
+    },
+    {
+      "id": 1779094617452,
+      "statDate": "2026-05-18",
+      "project": "驱势科技",
+      "account": "维维",
+      "initialFund": 9950,
+      "returnedFund": 9885,
+      "result": "中签",
+      "lots": 1,
+      "profit": -65
+    }
+  ]
+}

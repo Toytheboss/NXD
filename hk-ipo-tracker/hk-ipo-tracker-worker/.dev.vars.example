@@ -1,0 +1,4 @@
+# 复制为 .dev.vars 后本地调试： wrangler dev
+# 切勿把 .dev.vars 提交到 Git（已在 .gitignore 中忽略）
+SITE_PASSWORD=请改成你的本地测试密码
+EDITOR_PASSWORD=请改成管理员在线编辑密码（与 SITE_PASSWORD 不同）

@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>港股打新统计系统</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f5f5f0;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: #1a1a1a;
+      padding: 40px 32px;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    /* ── 汇总卡片 ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .card-label {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+    .card-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .card-value.green { color: #16a34a; }
+    .card-value.blue  { color: #2563eb; }
+    .card-value.orange { color: #d97706; }
+
+    /* ── Section 标题 ── */
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d97706;
+      display: inline-block;
+    }
+
+    /* ── 表格通用 ── */
+    .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow: auto;
+      margin-bottom: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      background: #fafafa;
+      padding: 13px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #888;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 13px 16px;
+      border-bottom: 1px solid #f3f3f3;
+      color: #333;
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+
+    .capital-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .capital-date-group {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+    .capital-date-group > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a1a;
+      background: #fafafa;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+    }
+    .capital-date-group > summary::-webkit-details-marker { display: none; }
+    .capital-date-group > summary::before {
+      content: '▶';
+      font-size: 10px;
+      color: #d97706;
+      transition: transform 0.15s ease;
+      flex-shrink: 0;
+    }
+    .capital-date-group[open] > summary::before { transform: rotate(90deg); }
+    .capital-date-meta {
+      font-size: 12px;
+      font-weight: 400;
+      color: #888;
+      margin-left: auto;
+      margin-right: 8px;
+    }
+    .capital-date-actions {
+      flex-shrink: 0;
+    }
+    .capital-date-actions .btn {
+      font-size: 11px;
+      padding: 4px 10px;
+    }
+    .capital-date-body .table-wrap {
+      margin-bottom: 0;
+      box-shadow: none;
+      border-radius: 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green  { background: #dcfce7; color: #16a34a; }
+    .badge-gray   { background: #f3f4f6; color: #6b7280; }
+    .badge-yellow { background: #fef9c3; color: #b45309; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+
+    .profit-pos { color: #16a34a; font-weight: 600; }
+    .profit-neg { color: #dc2626; font-weight: 600; }
+    .profit-zero { color: #aaa; }
+
+    input, select {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      background: #fff;
+      transition: border 0.15s;
+    }
+    input:focus, select:focus { border-color: #d97706; }
+    input[type="number"] { width: 120px; }
+    input[type="text"]   { width: 150px; }
+    input[type="date"]   { width: 140px; }
+
+    .btn {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #d97706; color: #fff; }
+    .btn-danger  { background: #fee2e2; color: #dc2626; font-size: 12px; padding: 5px 12px; }
+    .btn-edit    { background: #e0e7ff; color: #3730a3; font-size: 12px; padding: 5px 12px; margin-right: 6px; }
+    .btn-sm      { padding: 5px 12px; font-size: 12px; }
+    .btn-ghost   { background: #f3f4f6; color: #4b5563; font-size: 12px; padding: 5px 12px; margin-left: 6px; }
+    .row-actions { white-space: nowrap; }
+    .form-edit-hint { font-size: 12px; color: #d97706; align-self: center; margin-left: 4px; display: none; }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-label {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* 利润分配表 */
+    .dist-table thead th { background: #fffbeb; }
+    .total-row td { background: #f9fafb; font-weight: 700; color: #1a1a1a; }
+
+    .empty-tip {
+      text-align: center;
+      color: #ccc;
+      padding: 40px;
+      font-size: 13px;
+    }
+
+    body.read-only .editor-only { display: none !important; }
+    body.read-only #person-table th:last-child,
+    body.read-only #person-table td:last-child,
+    body.read-only #funder-table th:last-child,
+    body.read-only #funder-table td:last-child,
+    body.read-only #detail-table th:last-child,
+    body.read-only #detail-table td:last-child { display: none !important; }
+
+    .admin-strip .admin-panel { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+
+    /* 管理员入口：不用 form-row 类名，避免与只读样式/打印样式混淆 */
+    .admin-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 24px;
+      padding: 16px 18px;
+      border-radius: 12px;
+      border: 2px solid #d97706;
+      background: linear-gradient(135deg, #fffbeb 0%, #ffedd5 100%);
+      box-shadow: 0 2px 12px rgba(217, 119, 6, 0.2);
+    }
+    .admin-strip .admin-title {
+      width: 100%;
+      font-size: 14px;
+      font-weight: 800;
+      color: #9a3412;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .form-row, .btn { display: none; }
+      .admin-strip { display: none; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="read-only">
+
+<h1>港股打新统计系统</h1>
+<p class="subtitle">访客输入网站密码即可浏览；管理员可额外输入「编辑密码」在线改数据并保存到云端（需配置 KV）</p>
+
+<div id="admin-bar" class="admin-strip">
+  <div class="admin-title">管理员入口</div>
+  <div id="admin-wait" class="admin-panel">
+    <span style="font-size:13px;color:#9a3412">正在同步云端数据…</span>
+  </div>
+  <div id="admin-guest" class="admin-panel" style="display:none">
+    <div class="form-group">
+      <div class="form-label">管理员编辑密码</div>
+      <input type="password" id="editor-pwd" placeholder="与访客密码不同" autocomplete="current-password" style="width:200px">
+    </div>
+    <div class="form-group">
+      <div class="form-label">&nbsp;</div>
+      <button type="button" class="btn btn-primary" onclick="editorLogin()">开启在线编辑</button>
+    </div>
+    <span style="font-size:12px;color:#78716c;align-self:center;width:100%">输入下方「管理员编辑密码」后点按钮，才会出现「添加打新记录」等编辑区；改完务必点「保存到云端」才会同步给他人。未保存前本页也会自动备份在本浏览器，刷新可恢复。</span>
+  </div>
+  <div id="admin-user" class="admin-panel" style="display:none">
+    <span style="font-size:13px;font-weight:700;color:#9a3412">已开启在线编辑</span>
+    <button type="button" class="btn btn-primary" onclick="saveToCloud()">保存到云端</button>
+    <button type="button" class="btn btn-sm" style="background:#e2e8f0;color:#334155" onclick="editorLogout()">退出管理</button>
+    <span id="draft-restored-tip" style="display:none;font-size:12px;color:#b45309;align-self:center">已从本机草稿恢复未保存的修改，请点「保存到云端」。</span>
+  </div>
+</div>
+
+<!-- 汇总卡片 -->
+<div class="summary-grid">
+  <div class="card"><div class="card-label">参与项目数</div><div class="card-value blue" id="s-projects">0</div></div>
+  <div class="card"><div class="card-label">总投入金额（HKD）</div><div class="card-value" id="s-invest">0</div></div>
+  <div class="card"><div class="card-label">余额（HKD）</div><div class="card-value orange" id="s-balance">0</div></div>
+  <div class="card"><div class="card-label">中签率</div><div class="card-value orange" id="s-rate">0%</div></div>
+  <div class="card"><div class="card-label">总利润（HKD）</div><div class="card-value green" id="s-profit">0</div></div>
+</div>
+
+<!-- ① 账户信息汇总 -->
+<div class="section-title"><span class="dot"></span>账户信息汇总</div>
+<div class="form-row editor-only">
+  <div class="form-group">
+    <div class="form-label">姓名</div>
+    <input type="text" id="p-name" placeholder="张三">
+  </div>
+  <div class="form-group">
+    <div class="form-label">券商/平台</div>
+    <input type="text" id="p-broker" placeholder="富途 / 老虎 / 辉立…">
+  </div>
+  <div class="form-group">
+    <div class="form-label">账户类型</div>
+    <select id="p-type">
+      <option value="自有">自有</option>
+      <option value="借用">借用</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">备注</div>
+    <input type="text" id="p-note" placeholder="可选" style="width:160px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button type="button" class="btn btn-primary" id="p-submit-btn" onclick="addPerson()">添加人员</button>
+    <button type="button" class="btn btn-ghost" id="p-cancel-edit" style="display:none" onclick="cancelPersonEdit()">取消</button>
+    <span class="form-edit-hint" id="p-edit-hint">正在编辑</span>
+  </div>
+</div>
+<div class="table-wrap" style="margin-bottom:40px">
+  <table id="person-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>姓名</th>
+        <th>券商/平台</th>
+        <th>账户类型</th>
+        <th>备注</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="person-body">
+      <tr><td colspan="6" class="empty-tip">暂无账户信息，请添加</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 资金统计（手动录入，独立数据） -->
+<div class="section-title"><span class="dot"></span>资金统计</div>
+<p class="no-print" style="font-size:12px;color:#888;margin:-8px 0 14px"><strong>利润（点「添加一行」时自动算）</strong>：未填 TGE 时中签可手填利润。<strong>备注</strong>：<br>中签：利润 = TGE价值 −（中签手数 × 每手参与）− 手续费<br>未中签：利润 = 账户余额 − 初始资金。资料未补全也可先添加，利润暂显示 <code style="font-size:11px">—</code>，之后点<strong>编辑</strong>补齐。<strong>先选统计日期</strong>再添加各行；点击日期标题可收起/展开。填完「保存到云端」。</p>
+<div class="form-row editor-only">
+  <div class="form-group">
+    <div class="form-label">统计日期</div>
+    <input type="date" id="c-date" style="width:150px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">项目</div>
+    <input type="text" id="c-project" placeholder="股票/项目" style="width:130px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">账户</div>
+    <input type="text" id="c-account" placeholder="姓名" style="width:100px">
+  </div>
+  <div class="form-group" id="c-group-initial">
+    <div class="form-label">初始资金(HKD)</div>
+    <input type="number" id="c-initial" placeholder="未中签必填；中签选填" step="any">
+  </div>
+  <div class="form-group">
+    <div class="form-label">结果</div>
+    <select id="c-result" onchange="onCapitalResultChange()">
+      <option value="中签">中签</option>
+      <option value="未中签">未中签</option>
+    </select>
+  </div>
+  <div class="form-group" id="c-group-lots">
+    <div class="form-label">中签手数</div>
+    <input type="number" id="c-lots" placeholder="仅中签" min="0" style="width:72px">
+  </div>
+  <div class="form-group" id="c-group-perlot">
+    <div class="form-label">每手参与(HKD)</div>
+    <input type="number" id="c-perlot" placeholder="仅中签" step="any">
+  </div>
+  <div class="form-group" id="c-group-tge">
+    <div class="form-label">TGE价值(HKD)</div>
+    <input type="number" id="c-tge" placeholder="仅中签" step="any">
+  </div>
+  <div class="form-group" id="c-group-fee">
+    <div class="form-label">手续费(HKD)</div>
+    <input type="number" id="c-fee" placeholder="选填，默认 0" step="any">
+  </div>
+  <div class="form-group" id="c-group-returned">
+    <div class="form-label">账户余额(HKD)</div>
+    <input type="number" id="c-returned" placeholder="未中签必填；中签选填" step="any">
+  </div>
+  <div class="form-group" id="c-group-profit">
+    <div class="form-label">利润(HKD)</div>
+    <input type="number" id="c-profit" placeholder="仅中签、未填TGE时手填" step="any">
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button type="button" class="btn btn-primary" id="c-submit-btn" onclick="addCapitalRow()">添加一行</button>
+    <button type="button" class="btn btn-ghost" id="c-cancel-edit" style="display:none" onclick="cancelCapitalEdit()">取消</button>
+    <span class="form-edit-hint" id="c-edit-hint">正在编辑</span>
+  </div>
+</div>
+<div id="capital-groups" class="capital-groups"></div>
+
+<!-- ④ 出资方明细 -->
+<div class="section-title"><span class="dot"></span>出资方明细</div>
+<div class="form-row editor-only">
+  <div class="form-group">
+    <div class="form-label">出资方姓名</div>
+    <input type="text" id="fn-name" placeholder="如：Roy">
+  </div>
+  <div class="form-group">
+    <div class="form-label">出资金额(HKD)</div>
+    <input type="number" id="fn-amount" placeholder="50000">
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button type="button" class="btn btn-primary" id="fn-submit-btn" onclick="addFunder()">添加出资</button>
+    <button type="button" class="btn btn-ghost" id="fn-cancel-edit" style="display:none" onclick="cancelFunderEdit()">取消</button>
+    <span class="form-edit-hint" id="fn-edit-hint">正在编辑</span>
+  </div>
+</div>
+<div class="table-wrap">
+  <table id="funder-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>项目</th>
+        <th>出资方</th>
+        <th>出资金额(HKD)</th>
+        <th>利润分配(HKD)</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="funder-body">
+      <tr><td colspan="6" class="empty-tip">暂无出资记录，请添加</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ⑤ 账户中签明细 -->
+<div class="section-title"><span class="dot"></span>账户中签明细</div>
+<div class="form-row editor-only">
+  <div class="form-group">
+    <div class="form-label">项目名称</div>
+    <input type="text" id="d-project" placeholder="与出资/统计中一致" style="width:180px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">账户姓名</div>
+    <input type="text" id="d-name" placeholder="姓名">
+  </div>
+  <div class="form-group">
+    <div class="form-label">打新金额(HKD)</div>
+    <input type="number" id="d-amount" placeholder="10000">
+  </div>
+  <div class="form-group" id="d-group-lots">
+    <div class="form-label">中签手数</div>
+    <input type="number" id="d-lots" placeholder="1" style="width:90px">
+  </div>
+  <div class="form-group" id="d-group-tge">
+    <div class="form-label">TGE价值(HKD)</div>
+    <input type="number" id="d-tge" placeholder="上市/TGE 到账估值" step="any">
+  </div>
+  <div class="form-group" id="d-group-fee" style="display:none">
+    <div class="form-label">手续费(HKD)</div>
+    <input type="number" id="d-fee" placeholder="认购费等" step="any">
+  </div>
+  <div class="form-group">
+    <div class="form-label">状态</div>
+    <select id="d-status" onchange="syncDetailFormMode()">
+      <option value="中签">中签</option>
+      <option value="未中签">未中签</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button type="button" class="btn btn-primary" id="d-submit-btn" onclick="addDetail()">添加明细</button>
+    <button type="button" class="btn btn-ghost" id="d-cancel-edit" style="display:none" onclick="cancelDetailEdit()">取消</button>
+    <span class="form-edit-hint" id="d-edit-hint">正在编辑</span>
+  </div>
+</div>
+<div class="table-wrap">
+  <table id="detail-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>项目</th>
+        <th>账户姓名</th>
+        <th>打新金额(HKD)</th>
+        <th>中签手数</th>
+        <th>TGE价值</th>
+        <th>手续费</th>
+        <th>获利(HKD)</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="detail-body">
+      <tr><td colspan="10" class="empty-tip">暂无中签明细</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ⑥ 人员利润分配汇总 -->
+<div class="section-title"><span class="dot"></span>人员利润分配汇总</div>
+<div class="table-wrap">
+  <table id="dist-table" class="dist-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>账户姓名</th>
+        <th>参与项目数</th>
+        <th>总投入(HKD)</th>
+        <th>中签次数</th>
+        <th>中签手数</th>
+        <th>总获利(HKD)</th>
+        <th>投资回报率</th>
+      </tr>
+    </thead>
+    <tbody id="dist-body">
+      <tr><td colspan="8" class="empty-tip">添加账户明细后自动汇总</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  let READ_ONLY = true;
+  /** 首次从服务器/内嵌 meta 灌数据时不要写入「未保存草稿」，避免误标脏 */
+  let BOOTSTRAP_SKIP_DRAFT = true;
+  const LOCAL_DRAFT_KEY = 'hk_ipo_tracker_draft_v1';
+  const LOCAL_DIRTY_KEY = 'hk_ipo_tracker_dirty_v1';
+  let _draftTimer = null;
+
+  let ipos = [];
+  let details = [];
+  /** 资金统计：独立手动表，与 details 无联动 */
+  let capitalStats = [];
+  /** 各日期分组展开状态（true=展开） */
+  let capitalGroupOpen = {};
+  let editingCapitalId = null;
+  let editingFunderId = null;
+  let editingDetailId = null;
+  let editingPersonId = null;
+
+  function setEditUi(prefix, on, addLabel) {
+    const btn = document.getElementById(prefix + '-submit-btn');
+    const cancel = document.getElementById(prefix + '-cancel-edit');
+    const hint = document.getElementById(prefix + '-edit-hint');
+    if (btn) btn.textContent = on ? '保存修改' : addLabel;
+    if (cancel) cancel.style.display = on ? 'inline-block' : 'none';
+    if (hint) hint.style.display = on ? 'inline' : 'none';
+  }
+
+  function fillInput(id, v) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = v == null || v === undefined ? '' : String(v);
+  }
+
+  function editorOpsCell(editFn, delFn) {
+    return `<td class="editor-only row-actions"><button type="button" class="btn btn-edit" onclick="${editFn}">编辑</button><button type="button" class="btn btn-danger" onclick="${delFn}">删除</button></td>`;
+  }
+
+  function todayDateKey() {
+    return dateKeyFromDate(new Date());
+  }
+
+  function dateKeyFromDate(d) {
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
+
+  /** 推断/补全统计日期：优先 statDate；否则用「添加一行」时的 id 时间戳；再否则用快照导出日/今天 */
+  function inferCapitalStatDate(r, fallbackKey) {
+    const d = r && r.statDate;
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    const fb = fallbackKey && /^\d{4}-\d{2}-\d{2}$/.test(fallbackKey) ? fallbackKey : todayDateKey();
+    const id = Number(r && r.id);
+    if (!Number.isFinite(id)) return fb;
+    const now = Date.now();
+    const refMs = new Date(fb + 'T12:00:00').getTime();
+    const ref = Number.isFinite(refMs) ? refMs : now;
+    if (id >= ref - 86400000 * 7 && id <= now + 120000) {
+      const fromId = new Date(id);
+      if (!isNaN(fromId.getTime())) return dateKeyFromDate(fromId);
+    }
+    return fb;
+  }
+
+  const DEFAULT_CAPITAL_STAT_DATE = '2026-05-15';
+
+  /** 将「未分组」及早期导入记录统一归入 5月15日 */
+  function migrateCapitalStatDates() {
+    capitalStats.forEach((r) => {
+      const d = r.statDate;
+      const id = Number(r.id);
+      const missingDate = !d || !/^\d{4}-\d{2}-\d{2}$/.test(d);
+      const legacyBatchId =
+        Number.isFinite(id) && id >= 1747891000000 && id <= 1747891999999;
+      if (missingDate || legacyBatchId) {
+        r.statDate = DEFAULT_CAPITAL_STAT_DATE;
+      }
+    });
+  }
+
+  function capitalStatDateKey(r) {
+    const d = r && r.statDate;
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    return inferCapitalStatDate(r, DEFAULT_CAPITAL_STAT_DATE);
+  }
+
+  function formatCapitalDateLabel(key) {
+    const p = key.split('-');
+    if (p.length === 3) return `${Number(p[1])}月${Number(p[2])}日`;
+    return key;
+  }
+
+  function groupCapitalStatsByDate() {
+    const map = {};
+    capitalStats.forEach((r) => {
+      const k = capitalStatDateKey(r);
+      if (!map[k]) map[k] = [];
+      map[k].push(r);
+    });
+    return map;
+  }
+
+  function sortCapitalDateKeys(keys) {
+    return keys.sort((a, b) => b.localeCompare(a));
+  }
+
+  function initCapitalDateInput() {
+    const el = document.getElementById('c-date');
+    if (el && !el.value) el.value = todayDateKey();
+  }
+
+  function onCapitalGroupToggle(el) {
+    const key = el.dataset && el.dataset.date;
+    if (key) capitalGroupOpen[decodeURIComponent(key)] = el.open;
+  }
+
+  function capitalTableHeadHtml() {
+    const opCol = READ_ONLY ? '' : '<th class="editor-only">操作</th>';
+    return `<thead><tr>
+        <th>#</th><th>项目</th><th>账户</th><th>初始资金(HKD)</th><th>结果</th>
+        <th>中签手数</th><th>每手参与(HKD)</th><th>TGE价值(HKD)</th><th>手续费(HKD)</th>
+        <th>账户余额(HKD)</th><th>利润(HKD)</th>${opCol}
+      </tr></thead>`;
+  }
+
+  function capitalStatRowHtml(r, index) {
+    const hit = r.result === '中签';
+    const lotsCell = hit && Number.isFinite(Number(r.lots)) ? `${Number(r.lots)} 手` : '—';
+    const profitDisp = effectiveCapitalProfit(r);
+    const profitClass =
+      profitDisp > 0 ? 'profit-pos' : profitDisp < 0 ? 'profit-neg' : 'profit-zero';
+    const tail = READ_ONLY
+      ? `<td class="${profitClass}">${moneyOrDash(profitDisp)}</td></tr>`
+      : `<td class="${profitClass}">${moneyOrDash(profitDisp)}</td>${editorOpsCell(`editCapitalRow(${r.id})`, `deleteCapitalRow(${r.id})`)}</tr>`;
+    return `<tr>
+        <td>${index + 1}</td>
+        <td><b>${escapeHtml(r.project)}</b></td>
+        <td>${escapeHtml(r.account)}</td>
+        <td>${moneyOrDash(r.initialFund)}</td>
+        <td><span class="badge ${statusBadge[r.result] || 'badge-gray'}">${escapeHtml(r.result)}</span></td>
+        <td>${lotsCell}</td>
+        <td>${moneyOrDash(r.perLot)}</td>
+        <td>${moneyOrDash(r.tgeValue)}</td>
+        <td>${moneyOrDash(r.fee)}</td>
+        <td>${moneyOrDash(r.returnedFund)}</td>
+        ${tail}`;
+  }
+
+  const statusBadge = {
+    '认购中':   'badge-yellow',
+    '等待结果': 'badge-yellow',
+    '已中签':   'badge-green',
+    '未中签':   'badge-gray',
+    '已退款':   'badge-gray',
+    '中签':     'badge-green',
+    '未中签':   'badge-gray',
+  };
+
+  function fmt(n) {
+    return Number(n).toLocaleString('zh-HK', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  }
+
+  function moneyOrDash(v) {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = Number(v);
+    return Number.isFinite(n) ? 'HKD ' + fmt(n) : '—';
+  }
+
+  /** 展示/汇总用：优先已存 profit；缺失时按备注公式从各列推算 */
+  function effectiveCapitalProfit(r) {
+    if (r.result === '未中签') {
+      const i0 = Number(r.initialFund);
+      const r0 = Number(r.returnedFund);
+      if (Number.isFinite(i0) && Number.isFinite(r0)) return r0 - i0;
+    }
+    const stored = Number(r.profit);
+    if (Number.isFinite(stored)) return stored;
+    if (r.result === '中签') {
+      const tge = Number(r.tgeValue);
+      if (Number.isFinite(tge)) {
+        const lots = Number.isFinite(Number(r.lots)) && Number(r.lots) >= 0 ? Number(r.lots) : 0;
+        const per = Number.isFinite(Number(r.perLot)) ? Number(r.perLot) : 0;
+        const fee = Number.isFinite(Number(r.fee)) ? Number(r.fee) : 0;
+        return tge - lots * per - fee;
+      }
+    }
+    return NaN;
+  }
+
+  function clearEditorDraftLocal() {
+    try {
+      localStorage.removeItem(LOCAL_DRAFT_KEY);
+      localStorage.removeItem(LOCAL_DIRTY_KEY);
+    } catch (e) { /* ignore */ }
+  }
+
+  function persistEditorDraftDebounced() {
+    if (READ_ONLY || BOOTSTRAP_SKIP_DRAFT) return;
+    if (_draftTimer) clearTimeout(_draftTimer);
+    _draftTimer = setTimeout(function () {
+      _draftTimer = null;
+      persistEditorDraftSync();
+    }, 350);
+  }
+
+  function persistEditorDraftSync() {
+    if (READ_ONLY || BOOTSTRAP_SKIP_DRAFT) return;
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      ipos,
+      details,
+      funders,
+      persons,
+      capitalStats,
+    };
+    try {
+      localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(data));
+      localStorage.setItem(LOCAL_DIRTY_KEY, '1');
+    } catch (e) { /* 存储已满等 */ }
+  }
+
+  function syncDetailFormMode() {
+    const sel = document.getElementById('d-status');
+    if (!sel) return;
+    const hit = sel.value === '中签';
+    [['d-group-lots', hit], ['d-group-tge', hit], ['d-group-fee', !hit]].forEach(([id, on]) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = on ? '' : 'none';
+    });
+  }
+
+  function syncCapitalFormMode() {
+    const sel = document.getElementById('c-result');
+    if (!sel) return;
+    const hit = sel.value === '中签';
+    [['c-group-lots', hit], ['c-group-perlot', hit], ['c-group-tge', hit], ['c-group-profit', hit]].forEach(([id, show]) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = show ? '' : 'none';
+    });
+    ['c-group-initial', 'c-group-returned', 'c-group-fee'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+  }
+
+  function onCapitalResultChange() {
+    const sel = document.getElementById('c-result');
+    if (!sel) return;
+    const hit = sel.value === '中签';
+    if (!hit) {
+      ['c-lots', 'c-perlot', 'c-tge', 'c-profit'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
+    syncCapitalFormMode();
+  }
+
+  function clearDetailForm() {
+    editingDetailId = null;
+    setEditUi('d', false, '添加明细');
+    fillInput('d-project', '');
+    fillInput('d-name', '');
+    fillInput('d-amount', '');
+    fillInput('d-lots', '');
+    fillInput('d-tge', '');
+    fillInput('d-fee', '');
+    const st = document.getElementById('d-status');
+    if (st) st.value = '中签';
+    syncDetailFormMode();
+  }
+
+  function cancelDetailEdit() {
+    if (READ_ONLY) return;
+    clearDetailForm();
+  }
+
+  function editDetail(id) {
+    if (READ_ONLY) return;
+    const d = details.find((x) => x.id === id);
+    if (!d) return;
+    editingDetailId = id;
+    fillInput('d-project', d.ipoName);
+    fillInput('d-name', d.name);
+    fillInput('d-amount', d.amount);
+    fillInput('d-status', d.status);
+    syncDetailFormMode();
+    fillInput('d-lots', d.lots);
+    fillInput('d-tge', d.tgeValue);
+    fillInput('d-fee', d.fee);
+    setEditUi('d', true, '添加明细');
+    document.getElementById('d-project')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function addDetail() {
+    if (READ_ONLY) return;
+    const ipoName = document.getElementById('d-project').value.trim();
+    const dname  = document.getElementById('d-name').value.trim();
+    const amount = parseFloat(document.getElementById('d-amount').value) || 0;
+    let lots   = parseInt(document.getElementById('d-lots').value, 10) || 0;
+    const status = document.getElementById('d-status').value;
+    const tgeRaw = document.getElementById('d-tge') && document.getElementById('d-tge').value;
+    const feeRaw = document.getElementById('d-fee') && document.getElementById('d-fee').value;
+    const tgeVal = parseFloat(tgeRaw);
+    const feeVal = parseFloat(feeRaw);
+    if (!ipoName || !dname) { alert('请填写项目名称与账户姓名'); return; }
+    const ipo = ipos.find(i => i.name === ipoName);
+    const ipoId = ipo ? ipo.id : null;
+    let profit;
+    let tgeValue;
+    let fee;
+    if (status === '中签') {
+      if (!lots) lots = 1;
+      const tge = Number.isFinite(tgeVal) && tgeVal > 0 ? tgeVal : 0;
+      tgeValue = tge > 0 ? tge : undefined;
+      profit = tge > 0 ? tge - amount : (ipo ? ipo.profit * lots : 0);
+    } else {
+      lots = 0;
+      const feeN = Number.isFinite(feeVal) && feeVal >= 0 ? feeVal : 0;
+      fee = feeN > 0 ? feeN : undefined;
+      profit = -feeN;
+    }
+    const row = {
+      id: editingDetailId || Date.now(),
+      ipoId,
+      ipoName,
+      name: dname,
+      amount,
+      lots,
+      profit,
+      status,
+      tgeValue,
+      fee,
+    };
+    if (editingDetailId) {
+      const idx = details.findIndex((d) => d.id === editingDetailId);
+      if (idx >= 0) details[idx] = row;
+    } else {
+      details.push(row);
+    }
+    clearDetailForm();
+    renderAll();
+  }
+
+  function deleteDetail(id) {
+    if (READ_ONLY) return;
+    if (editingDetailId === id) clearDetailForm();
+    details = details.filter(d => d.id !== id);
+    renderAll();
+  }
+
+  /** 资金统计利润（与页面「备注」一致）：
+   *  中签：利润 = TGE价值 −（中签手数 × 每手参与）− 手续费；未填 TGE 可手填利润。
+   *  未中签：利润 = 账户余额 − 初始资金。
+   *  初始资金/账户余额/手续费：表单始终显示；未中签时前两项必填；手续费中签/未中签均可填（未中签不参与利润公式）。
+   */
+  function clearCapitalForm() {
+    editingCapitalId = null;
+    setEditUi('c', false, '添加一行');
+    fillInput('c-project', '');
+    fillInput('c-account', '');
+    fillInput('c-initial', '');
+    fillInput('c-lots', '');
+    fillInput('c-perlot', '');
+    fillInput('c-tge', '');
+    fillInput('c-fee', '');
+    fillInput('c-returned', '');
+    fillInput('c-profit', '');
+    const sel = document.getElementById('c-result');
+    if (sel) sel.value = '中签';
+    initCapitalDateInput();
+    syncCapitalFormMode();
+  }
+
+  function cancelCapitalEdit() {
+    if (READ_ONLY) return;
+    clearCapitalForm();
+  }
+
+  function editCapitalRow(id) {
+    if (READ_ONLY) return;
+    const r = capitalStats.find((x) => x.id === id);
+    if (!r) return;
+    editingCapitalId = id;
+    fillInput('c-date', r.statDate || todayDateKey());
+    fillInput('c-project', r.project);
+    fillInput('c-account', r.account);
+    fillInput('c-result', r.result || '中签');
+    syncCapitalFormMode();
+    fillInput('c-initial', r.initialFund);
+    fillInput('c-returned', r.returnedFund);
+    fillInput('c-lots', r.lots);
+    fillInput('c-perlot', r.perLot);
+    fillInput('c-tge', r.tgeValue);
+    fillInput('c-fee', r.fee);
+    fillInput('c-profit', r.profit);
+    if (r.statDate) capitalGroupOpen[r.statDate] = true;
+    setEditUi('c', true, '添加一行');
+    const el = document.getElementById('c-project');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function addCapitalRow() {
+    if (READ_ONLY) return;
+    const project = document.getElementById('c-project') && document.getElementById('c-project').value.trim();
+    const account = document.getElementById('c-account') && document.getElementById('c-account').value.trim();
+    const result = document.getElementById('c-result') && document.getElementById('c-result').value;
+    const profitRaw = document.getElementById('c-profit') && document.getElementById('c-profit').value;
+    const initialN = parseFloat(document.getElementById('c-initial').value);
+    const returnedN = parseFloat(document.getElementById('c-returned').value);
+    const lotsN = parseInt(document.getElementById('c-lots').value, 10);
+    const perLotN = parseFloat(document.getElementById('c-perlot').value);
+    const tgeN = parseFloat(document.getElementById('c-tge').value);
+    const feeN = parseFloat(document.getElementById('c-fee').value);
+    const hit = result !== '未中签';
+    let profitN;
+    if (hit) {
+      const feePart = Number.isFinite(feeN) ? feeN : 0;
+      const lotsPart = Number.isFinite(lotsN) && lotsN >= 0 ? lotsN : 0;
+      const perPart = Number.isFinite(perLotN) ? perLotN : 0;
+      if (Number.isFinite(tgeN)) {
+        profitN = tgeN - lotsPart * perPart - feePart;
+      } else {
+        profitN = parseFloat(profitRaw);
+      }
+    } else {
+      profitN = Number.isFinite(initialN) && Number.isFinite(returnedN)
+        ? returnedN - initialN
+        : NaN;
+    }
+    const feeStored = Number.isFinite(feeN) ? feeN : undefined;
+    const dateEl = document.getElementById('c-date');
+    const statDate = dateEl && dateEl.value ? dateEl.value : todayDateKey();
+    const row = {
+      id: editingCapitalId || Date.now(),
+      statDate,
+      project: project || '未命名项目',
+      account: account || '—',
+      initialFund: Number.isFinite(initialN) ? initialN : undefined,
+      returnedFund: Number.isFinite(returnedN) ? returnedN : undefined,
+      result: hit ? '中签' : '未中签',
+      lots: hit && Number.isFinite(lotsN) && lotsN >= 0 ? lotsN : 0,
+      perLot: hit && Number.isFinite(perLotN) ? perLotN : undefined,
+      tgeValue: hit && Number.isFinite(tgeN) ? tgeN : undefined,
+      fee: feeStored,
+      profit: profitN,
+    };
+    if (editingCapitalId) {
+      const idx = capitalStats.findIndex((r) => r.id === editingCapitalId);
+      if (idx >= 0) capitalStats[idx] = row;
+    } else {
+      capitalStats.push(row);
+    }
+    capitalGroupOpen[statDate] = true;
+    clearCapitalForm();
+    renderAll();
+  }
+
+  function deleteCapitalRow(id) {
+    if (READ_ONLY) return;
+    if (editingCapitalId === id) clearCapitalForm();
+    capitalStats = capitalStats.filter((r) => r.id !== id);
+    renderAll();
+  }
+
+  function deleteCapitalGroup(encodedDateKey) {
+    if (READ_ONLY) return;
+    const dateKey = decodeURIComponent(encodedDateKey);
+    const label = formatCapitalDateLabel(dateKey);
+    const count = capitalStats.filter((r) => capitalStatDateKey(r) === dateKey).length;
+    if (count === 0) return;
+    if (!confirm(`确定删除「${label}」分组及其全部 ${count} 条记录？此操作不可撤销。`)) return;
+    capitalStats = capitalStats.filter((r) => capitalStatDateKey(r) !== dateKey);
+    delete capitalGroupOpen[dateKey];
+    renderAll();
+  }
+
+  function renderAll() {
+    renderDetailTable();
+    renderCapitalStatsTable();
+    renderDistTable();
+    renderFunderTable();
+    updateSummary();
+    if (!READ_ONLY) {
+      syncDetailFormMode();
+      syncCapitalFormMode();
+      initCapitalDateInput();
+    }
+    persistEditorDraftDebounced();
+  }
+
+  function renderDetailTable() {
+    const tbody = document.getElementById('detail-body');
+    if (details.length === 0) {
+      const tip = READ_ONLY ? '暂无已发布数据。' : '暂无中签明细';
+      tbody.innerHTML = `<tr><td colspan="10" class="empty-tip">${tip}</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = details.map((d, i) => {
+      const profitClass = d.profit > 0 ? 'profit-pos' : d.profit < 0 ? 'profit-neg' : 'profit-zero';
+      const tgeCell = d.tgeValue != null && Number(d.tgeValue) > 0 ? 'HKD ' + fmt(d.tgeValue) : '—';
+      const feeCell = d.fee != null && Number(d.fee) > 0 ? 'HKD ' + fmt(d.fee) : '—';
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${d.ipoName}</td>
+        <td>${d.name}</td>
+        <td>${d.amount > 0 ? 'HKD ' + fmt(d.amount) : '—'}</td>
+        <td>${d.status === '中签' ? (d.lots || 0) + ' 手' : '—'}</td>
+        <td>${tgeCell}</td>
+        <td>${feeCell}</td>
+        <td class="${profitClass}">HKD ${fmt(d.profit || 0)}</td>
+        <td><span class="badge ${statusBadge[d.status] || 'badge-gray'}">${d.status}</span></td>
+        ${editorOpsCell(`editDetail(${d.id})`, `deleteDetail(${d.id})`)}
+      </tr>`;
+    }).join('');
+  }
+
+  function renderCapitalStatsTable() {
+    const host = document.getElementById('capital-groups');
+    if (!host) return;
+    const colSpan = READ_ONLY ? 11 : 12;
+    if (capitalStats.length === 0) {
+      const tip = READ_ONLY ? '暂无已发布数据。' : '选择统计日期，在上方填写后点「添加一行」；保存到云端后他人可见。';
+      host.innerHTML = `<div class="table-wrap"><table class="dist-table"><tbody><tr><td colspan="${colSpan}" class="empty-tip">${tip}</td></tr></tbody></table></div>`;
+      return;
+    }
+    const groups = groupCapitalStatsByDate();
+    const dateKeys = sortCapitalDateKeys(Object.keys(groups));
+    host.innerHTML = dateKeys.map((dateKey, idx) => {
+      const rows = groups[dateKey];
+      const profitSum = rows.reduce((s, r) => {
+        const e = effectiveCapitalProfit(r);
+        return s + (Number.isFinite(e) ? e : 0);
+      }, 0);
+      const projects = [...new Set(rows.map((r) => r.project).filter(Boolean))];
+      const projLabel = projects.length ? projects.slice(0, 2).join('、') + (projects.length > 2 ? '…' : '') : '—';
+      const profitClass = profitSum > 0 ? 'profit-pos' : profitSum < 0 ? 'profit-neg' : '';
+      const isOpen = dateKey in capitalGroupOpen ? capitalGroupOpen[dateKey] : idx === 0;
+      const openAttr = isOpen ? ' open' : '';
+      const dk = encodeURIComponent(dateKey);
+      const bodyRows = rows.map((r, i) => capitalStatRowHtml(r, i)).join('');
+      const delGroupBtn = READ_ONLY
+        ? ''
+        : `<span class="capital-date-actions editor-only"><button type="button" class="btn btn-danger" onclick="event.preventDefault();event.stopPropagation();deleteCapitalGroup('${dk}')">删除分组</button></span>`;
+      return `<details class="capital-date-group"${openAttr} data-date="${dk}" ontoggle="onCapitalGroupToggle(this)">
+        <summary>
+          <span>${formatCapitalDateLabel(dateKey)}</span>
+          <span class="capital-date-meta">${escapeHtml(projLabel)} · ${rows.length} 条 · 利润 <span class="${profitClass}">HKD ${fmt(profitSum)}</span></span>
+          ${delGroupBtn}
+        </summary>
+        <div class="capital-date-body">
+          <div class="table-wrap">
+            <table class="dist-table">${capitalTableHeadHtml()}<tbody>${bodyRows}</tbody></table>
+          </div>
+        </div>
+      </details>`;
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderDistTable() {
+    const tbody = document.getElementById('dist-body');
+    if (details.length === 0) {
+      const tip = READ_ONLY ? '暂无已发布数据。' : '添加账户明细后自动汇总';
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-tip">${tip}</td></tr>`;
+      return;
+    }
+    const personMap = {};
+    details.forEach(d => {
+      if (!personMap[d.name]) personMap[d.name] = { projects: new Set(), invest: 0, hitCount: 0, lots: 0, profit: 0 };
+      const p = personMap[d.name];
+      p.projects.add(d.ipoName || String(d.ipoId || ''));
+      const ipo = d.ipoId != null ? ipos.find(i => i.id == d.ipoId) : null;
+      if (ipo) p.invest += ipo.invest;
+      else if (d.amount > 0) p.invest += d.amount;
+      if (d.status === '中签') { p.hitCount++; p.lots += d.lots; }
+      p.profit += d.profit;
+    });
+
+    let totalInvest = 0, totalProfit = 0;
+    const rows = Object.entries(personMap).map(([name, p], i) => {
+      const roi = p.invest > 0 ? ((p.profit / p.invest) * 100).toFixed(2) + '%' : '—';
+      const profitClass = p.profit > 0 ? 'profit-pos' : p.profit < 0 ? 'profit-neg' : 'profit-zero';
+      totalInvest += p.invest;
+      totalProfit += p.profit;
+      return `<tr>
+        <td>${i+1}</td>
+        <td><b>${name}</b></td>
+        <td>${p.projects.size}</td>
+        <td>HKD ${fmt(p.invest)}</td>
+        <td>${p.hitCount}</td>
+        <td>${p.lots} 手</td>
+        <td class="${profitClass}">HKD ${fmt(p.profit)}</td>
+        <td class="${profitClass}">${roi}</td>
+      </tr>`;
+    });
+
+    const totalROI = totalInvest > 0 ? ((totalProfit / totalInvest) * 100).toFixed(2) + '%' : '—';
+    const totalClass = totalProfit > 0 ? 'profit-pos' : totalProfit < 0 ? 'profit-neg' : 'profit-zero';
+    rows.push(`<tr class="total-row">
+      <td colspan="2">合计</td>
+      <td>—</td>
+      <td>HKD ${fmt(totalInvest)}</td>
+      <td>—</td>
+      <td>—</td>
+      <td class="${totalClass}">HKD ${fmt(totalProfit)}</td>
+      <td class="${totalClass}">${totalROI}</td>
+    </tr>`);
+
+    tbody.innerHTML = rows.join('');
+  }
+
+  function totalFunderInvest() {
+    return funders.reduce((s, f) => s + (Number(f.amount) || 0), 0);
+  }
+
+  function updateSummary() {
+    const names = new Set(capitalStats.map((r) => r.project).filter(Boolean));
+    details.forEach((d) => {
+      if (d.ipoName) names.add(d.ipoName);
+    });
+    funders.forEach((f) => {
+      if (f.ipoName) names.add(f.ipoName);
+    });
+    const totalInvestIpo = ipos.reduce((s, i) => s + i.invest * i.accs, 0);
+    const totalInvest = funders.length > 0 ? totalFunderInvest() : totalInvestIpo;
+    const totalHits   = ipos.reduce((s, i) => s + i.hits, 0);
+    const totalSlots  = ipos.reduce((s, i) => s + i.accs, 0);
+    const totalProfitIpo = ipos.reduce((s, i) => s + i.profit * i.hits, 0);
+    const totalProfitCap = capitalStats.reduce((s, r) => {
+      const e = effectiveCapitalProfit(r);
+      return s + (Number.isFinite(e) ? e : 0);
+    }, 0);
+    const rate = totalSlots > 0 ? ((totalHits / totalSlots) * 100).toFixed(1) + '%' : '—';
+    const showProfit = ipos.length ? totalProfitIpo : totalProfitCap;
+    const balance = totalInvest + showProfit;
+    document.getElementById('s-projects').textContent = String(names.size || ipos.length);
+    document.getElementById('s-invest').textContent = 'HKD ' + fmt(totalInvest);
+    const balEl = document.getElementById('s-balance');
+    balEl.textContent = 'HKD ' + fmt(balance);
+    balEl.className = 'card-value orange';
+    document.getElementById('s-rate').textContent = ipos.length ? rate : '—';
+    const el = document.getElementById('s-profit');
+    el.textContent = 'HKD ' + fmt(showProfit);
+    el.className = 'card-value ' + (showProfit >= 0 ? 'green' : 'profit-neg');
+  }
+
+  function funderProjectKey(f) {
+    if (f.ipoId != null && f.ipoId !== '' && f.ipoId !== 0) return 'id:' + f.ipoId;
+    return 'name:' + (f.ipoName || '');
+  }
+
+  /* ── 出资方明细 ── */
+  let funders = [];
+
+  function clearFunderForm() {
+    editingFunderId = null;
+    setEditUi('fn', false, '添加出资');
+    fillInput('fn-name', '');
+    fillInput('fn-amount', '');
+  }
+
+  function cancelFunderEdit() {
+    if (READ_ONLY) return;
+    clearFunderForm();
+  }
+
+  function editFunder(id) {
+    if (READ_ONLY) return;
+    const f = funders.find((x) => x.id === id);
+    if (!f) return;
+    editingFunderId = id;
+    fillInput('fn-name', f.name);
+    fillInput('fn-amount', f.amount);
+    setEditUi('fn', true, '添加出资');
+    document.getElementById('fn-name')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function addFunder() {
+    if (READ_ONLY) return;
+    const name   = document.getElementById('fn-name').value.trim();
+    const amount = parseFloat(document.getElementById('fn-amount').value) || 0;
+    if (!name) { alert('请填写出资方姓名'); return; }
+    const row = { id: editingFunderId || Date.now(), ipoId: null, ipoName: '', name, amount };
+    if (editingFunderId) {
+      const idx = funders.findIndex((f) => f.id === editingFunderId);
+      if (idx >= 0) {
+        row.ipoId = funders[idx].ipoId;
+        row.ipoName = funders[idx].ipoName;
+        funders[idx] = row;
+      }
+    } else {
+      funders.push(row);
+    }
+    clearFunderForm();
+    renderFunderTable();
+  }
+
+  function deleteFunder(id) {
+    if (READ_ONLY) return;
+    if (editingFunderId === id) clearFunderForm();
+    funders = funders.filter(f => f.id !== id);
+    renderFunderTable();
+  }
+
+  function renderFunderTable() {
+    const tbody = document.getElementById('funder-body');
+    if (funders.length === 0) {
+      const tip = READ_ONLY ? '暂无已发布数据。' : '暂无出资记录，请添加';
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-tip">${tip}</td></tr>`;
+      persistEditorDraftDebounced();
+      return;
+    }
+    const ipoTotalMap = {};
+    funders.forEach((f) => {
+      const k = funderProjectKey(f);
+      ipoTotalMap[k] = (ipoTotalMap[k] || 0) + f.amount;
+    });
+    tbody.innerHTML = funders.map((f, i) => {
+      const k = funderProjectKey(f);
+      const ipo = f.ipoId != null ? ipos.find((x) => x.id == f.ipoId) : null;
+      const ipoProfit = ipo ? ipo.profit * ipo.hits : 0;
+      const share = ipoTotalMap[k] > 0 ? f.amount / ipoTotalMap[k] : 0;
+      const profitShare = share * ipoProfit;
+      const profitClass = profitShare > 0 ? 'profit-pos' : profitShare < 0 ? 'profit-neg' : 'profit-zero';
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${f.ipoName ? escapeHtml(f.ipoName) : '—'}</td>
+        <td><b>${f.name}</b></td>
+        <td>HKD ${fmt(f.amount)}</td>
+        <td class="${profitClass}">HKD ${fmt(profitShare)}</td>
+        ${editorOpsCell(`editFunder(${f.id})`, `deleteFunder(${f.id})`)}
+      </tr>`;
+    }).join('');
+    updateSummary();
+    persistEditorDraftDebounced();
+  }
+
+  /* ── 账户信息汇总 ── */
+  let persons = [];
+
+  function clearPersonForm() {
+    editingPersonId = null;
+    setEditUi('p', false, '添加人员');
+    fillInput('p-name', '');
+    fillInput('p-broker', '');
+    fillInput('p-note', '');
+    const t = document.getElementById('p-type');
+    if (t) t.value = '自有';
+  }
+
+  function cancelPersonEdit() {
+    if (READ_ONLY) return;
+    clearPersonForm();
+  }
+
+  function editPerson(id) {
+    if (READ_ONLY) return;
+    const p = persons.find((x) => x.id === id);
+    if (!p) return;
+    editingPersonId = id;
+    fillInput('p-name', p.name);
+    fillInput('p-broker', p.broker);
+    fillInput('p-note', p.note);
+    const t = document.getElementById('p-type');
+    if (t) t.value = p.type || '自有';
+    setEditUi('p', true, '添加人员');
+    document.getElementById('p-name')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function addPerson() {
+    if (READ_ONLY) return;
+    const name   = document.getElementById('p-name').value.trim();
+    const broker = document.getElementById('p-broker').value.trim();
+    const type   = document.getElementById('p-type').value;
+    const note   = document.getElementById('p-note').value.trim();
+    if (!name) { alert('请填写姓名'); return; }
+    const row = { id: editingPersonId || Date.now(), name, broker, type, note };
+    if (editingPersonId) {
+      const idx = persons.findIndex((p) => p.id === editingPersonId);
+      if (idx >= 0) persons[idx] = row;
+    } else {
+      persons.push(row);
+    }
+    clearPersonForm();
+    renderPersonTable();
+  }
+
+  function deletePerson(id) {
+    if (READ_ONLY) return;
+    if (editingPersonId === id) clearPersonForm();
+    persons = persons.filter(p => p.id !== id);
+    renderPersonTable();
+  }
+
+  function renderPersonTable() {
+    const tbody = document.getElementById('person-body');
+    if (persons.length === 0) {
+      const tip = READ_ONLY ? '暂无已发布数据。' : '暂无账户信息，请添加';
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-tip">${tip}</td></tr>`;
+      persistEditorDraftDebounced();
+      return;
+    }
+    tbody.innerHTML = persons.map((p, i) => `<tr>
+      <td>${i+1}</td>
+      <td><b>${p.name}</b></td>
+      <td>${p.broker || '—'}</td>
+      <td><span class="badge ${p.type === '自有' ? 'badge-green' : 'badge-yellow'}">${p.type}</span></td>
+      <td>${p.note || '—'}</td>
+      ${editorOpsCell(`editPerson(${p.id})`, `deletePerson(${p.id})`)}
+    </tr>`).join('');
+    persistEditorDraftDebounced();
+  }
+
+  function applySnapshot(o) {
+    if (!o || typeof o !== 'object') return;
+    ipos = Array.isArray(o.ipos) ? o.ipos : [];
+    details = Array.isArray(o.details) ? o.details : [];
+    funders = Array.isArray(o.funders) ? o.funders : [];
+    persons = Array.isArray(o.persons) ? o.persons : [];
+    capitalStats = Array.isArray(o.capitalStats) ? o.capitalStats : [];
+    migrateCapitalStatDates();
+    editingCapitalId = null;
+    editingFunderId = null;
+    editingDetailId = null;
+    editingPersonId = null;
+    renderAll();
+    renderPersonTable();
+  }
+
+  async function loadPublishedSnapshotFallback() {
+    try {
+      const res = await fetch('./snapshot.json', { cache: 'no-store', credentials: 'same-origin' });
+      if (res.ok) applySnapshot(await res.json());
+    } catch (e) { /* ignore */ }
+  }
+
+  async function editorLogin() {
+    const input = document.getElementById('editor-pwd');
+    const pwd = input && input.value;
+    if (!pwd) { alert('请输入管理员编辑密码'); return; }
+    try {
+      const r = await fetch('/api/editor-login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        alert(j.error === 'wrong_password' ? '编辑密码错误' : (j.error || '登录失败'));
+        return;
+      }
+      location.reload();
+    } catch (e) {
+      alert('网络错误');
+    }
+  }
+
+  async function editorLogout() {
+    try {
+      await fetch('/api/editor-logout', { method: 'POST', credentials: 'include' });
+    } catch (e) { /* ignore */ }
+    location.reload();
+  }
+
+  async function saveToCloud() {
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      ipos,
+      details,
+      funders,
+      persons,
+      capitalStats,
+    };
+    try {
+      const r = await fetch('/api/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) {
+        clearEditorDraftLocal();
+        const tip = document.getElementById('draft-restored-tip');
+        if (tip) tip.style.display = 'none';
+        alert('已保存到云端，访客刷新即可看到最新数据。');
+      } else {
+        alert(j.message || j.error || ('保存失败 HTTP ' + r.status));
+      }
+    } catch (e) {
+      alert('网络错误');
+    }
+  }
+
+  function showAdminPanels() {
+    document.getElementById('admin-wait').style.display = 'none';
+    if (READ_ONLY) {
+      document.getElementById('admin-guest').style.display = 'flex';
+      document.getElementById('admin-user').style.display = 'none';
+    } else {
+      document.getElementById('admin-guest').style.display = 'none';
+      document.getElementById('admin-user').style.display = 'flex';
+    }
+  }
+
+  function base64ToUtf8(b64) {
+    if (!b64) return '';
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  async function initApp() {
+    BOOTSTRAP_SKIP_DRAFT = true;
+    const edMeta = document.querySelector('meta[name="__ipo_is_editor"]');
+    const isEditor = edMeta && edMeta.getAttribute('content') === '1';
+    READ_ONLY = !isEditor;
+    document.body.classList.toggle('read-only', READ_ONLY);
+
+    let dataLoaded = false;
+    const kvMeta = document.querySelector('meta[name="__ipo_kv_b64"]');
+    const b64 = kvMeta && kvMeta.getAttribute('content');
+    if (b64 && b64.length > 0) {
+      try {
+        applySnapshot(JSON.parse(base64ToUtf8(b64)));
+        dataLoaded = true;
+      } catch (e) { /* ignore */ }
+    }
+    if (!dataLoaded) {
+      try {
+        const dr = await fetch('/api/data', { credentials: 'include', cache: 'no-store' });
+        if (dr.ok) {
+          applySnapshot(await dr.json());
+        } else {
+          await loadPublishedSnapshotFallback();
+        }
+      } catch (e) {
+        await loadPublishedSnapshotFallback();
+      }
+    }
+
+    if (!READ_ONLY && localStorage.getItem(LOCAL_DIRTY_KEY) === '1') {
+      try {
+        const raw = localStorage.getItem(LOCAL_DRAFT_KEY);
+        if (raw) {
+          applySnapshot(JSON.parse(raw));
+          const tip = document.getElementById('draft-restored-tip');
+          if (tip) tip.style.display = 'inline';
+        } else {
+          localStorage.removeItem(LOCAL_DIRTY_KEY);
+        }
+      } catch (e) {
+        localStorage.removeItem(LOCAL_DIRTY_KEY);
+      }
+    }
+
+    BOOTSTRAP_SKIP_DRAFT = false;
+    showAdminPanels();
+  }
+
+  window.addEventListener('pagehide', function () {
+    if (!_draftTimer) return;
+    clearTimeout(_draftTimer);
+    _draftTimer = null;
+    persistEditorDraftSync();
+  });
+
+  window.addEventListener('beforeunload', function (e) {
+    if (_draftTimer) {
+      clearTimeout(_draftTimer);
+      _draftTimer = null;
+      persistEditorDraftSync();
+    }
+    if (READ_ONLY) return;
+    try {
+      if (localStorage.getItem(LOCAL_DIRTY_KEY) === '1') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    } catch (err) { /* ignore */ }
+  });
+
+  void initApp();
+</script>
+
+</body>
+</html>

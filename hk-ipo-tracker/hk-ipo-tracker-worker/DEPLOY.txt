@@ -1,0 +1,39 @@
+港股打新统计 — Workers 部署说明（访客密码 + 管理员在线编辑）
+================================================================
+
+访客怎么用
+----------
+打开 Workers 链接 → 浏览器 Basic 登录（用户名随意，密码 = SITE_PASSWORD）→ 自动看到数据。
+
+管理员怎么在线改（免上传 snapshot / 免本地文件）
+-----------------------------------------------
+1) **创建 KV 命名空间**（只需做一次）  
+   `npx wrangler@4 kv namespace create IPO_KV`  
+   把输出里的 **id** 填进 `wrangler.toml`：取消注释 `[[kv_namespaces]]` 三行，把 `id = "粘贴_kv_namespace_id"` 换成真实 id。
+
+2) **设置两个密码**（均不要用弱密码）  
+   - `npx wrangler@4 secret put SITE_PASSWORD` → 给访客用的「网站密码」  
+   - `npx wrangler@4 secret put EDITOR_PASSWORD` → **仅你自己知道**的「管理员编辑密码」，须与 SITE_PASSWORD **不同**。
+
+3) **部署**  
+   `npx wrangler@4 deploy`
+
+4) **日常使用**  
+   打开网站 → Basic 用 SITE_PASSWORD 登录 → 在绿色条里输入 **EDITOR_PASSWORD** → 点「开启在线编辑」→ 改表格 → 点 **「保存到云端」**。  
+   访客下次刷新即可看到最新数据（读的是 KV 里的 `snapshot`）。
+
+未绑定 KV 时
+------------
+仍可浏览：`GET /api/data` 会退回读取静态 `public/snapshot.json`。  
+「保存到云端」会提示需先绑定 KV。
+
+本地调试
+--------
+  cp .dev.vars.example .dev.vars
+  # 填写 SITE_PASSWORD 与 EDITOR_PASSWORD
+  npx wrangler@4 dev
+
+安全提示
+--------
+· 知道 SITE_PASSWORD 的人能看数据；知道 EDITOR_PASSWORD 且已登录 Basic 的人才能改 KV。  
+· 请使用强密码；勿把 EDITOR_PASSWORD 告诉访客。

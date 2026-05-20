@@ -1,0 +1,8 @@
+.DS_Store
+**/.wrangler/
+**/.dev.vars
+**/node_modules/
+
+# 仅保留根仓库，不纳入 archive 里的嵌套 git
+**/.git
+!.git
