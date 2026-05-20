@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>港股打新统计 v2.0a · 交互草图</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #f5f5f0;
+      color: #1a1a1a;
+      padding-bottom: 80px;
+    }
+    .mockup-banner {
+      background: linear-gradient(90deg, #1e3a5f, #2563eb);
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 13px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .mockup-banner strong { font-size: 15px; }
+    .mockup-tag {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+    }
+    .edit-toggle {
+      background: #fff;
+      color: #1e3a5f;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .page { padding: 24px 28px; max-width: 1280px; margin: 0 auto; }
+    .editable-region[contenteditable="true"]:focus {
+      outline: 2px dashed #d97706;
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+    /* 固定保存条 v2 */
+    .save-bar {
+      position: sticky;
+      top: 44px;
+      z-index: 150;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .save-bar.dirty { border-color: #fbbf24; background: #fffbeb; }
+    .save-status { font-size: 13px; color: #57534e; flex: 1; min-width: 200px; }
+    .save-status .dot-warn {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: #f59e0b;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-primary { background: #d97706; color: #fff; }
+    .btn-secondary { background: #e2e8f0; color: #334155; }
+    .btn-ghost { background: #f3f4f6; color: #4b5563; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .card-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+    .card-value { font-size: 22px; font-weight: 700; margin-top: 6px; }
+    .card-value.green { color: #16a34a; }
+    .card-value.blue { color: #2563eb; }
+
+    /* Tab 导航 */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      background: #fff;
+      padding: 6px;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    .tab {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .tab.active { background: #fffbeb; color: #9a3412; }
+    .tab .badge {
+      font-size: 10px;
+      background: #e5e7eb;
+      color: #374151;
+      padding: 2px 6px;
+      border-radius: 999px;
+      margin-left: 6px;
+    }
+    .tab.active .badge { background: #fde68a; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d97706;
+    }
+    .new-pill {
+      font-size: 10px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .help-collapsed {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .help-collapsed button {
+      background: none;
+      border: none;
+      color: #d97706;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+      font-family: inherit;
+    }
+    .help-expanded {
+      display: none;
+      font-size: 12px;
+      color: #666;
+      background: #fafafa;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+    .help-expanded.show { display: block; }
+
+    .date-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid #e5e5e5;
+      background: #fff;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .chip.active { border-color: #d97706; background: #fffbeb; color: #9a3412; font-weight: 600; }
+
+    .form-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      margin-bottom: 16px;
+    }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 11px; color: #999; font-weight: 600; }
+    input, select {
+      padding: 8px 10px;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .datalist-hint { font-size: 10px; color: #16a34a; margin-top: 2px; }
+
+    .batch-toggle {
+      width: 100%;
+      text-align: left;
+      padding: 12px 14px;
+      background: #f0fdf4;
+      border: 1px dashed #86efac;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #166534;
+      cursor: pointer;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+
+    .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      overflow: auto;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #fafafa;
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 11px;
+      color: #888;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid #f3f3f3; }
+    tr:hover { background: #fffbeb; cursor: pointer; }
+    tr.selected { background: #fef3c7; }
+    .badge-green { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+    .badge-gray { background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 999px; font-size: 11px; }
+
+    /* 侧栏编辑 v2 */
+    .layout-with-drawer {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .layout-with-drawer { grid-template-columns: 1fr; }
+      .drawer { position: fixed; right: 0; top: 0; bottom: 0; width: min(100%, 320px); z-index: 180; }
+    }
+    .drawer {
+      background: #fff;
+      border-radius: 12px;
+      border: 2px solid #d97706;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      position: sticky;
+      top: 120px;
+    }
+    .drawer-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #9a3412;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #fde68a;
+    }
+    .drawer .form-group { margin-bottom: 10px; width: 100%; }
+    .drawer input, .drawer select { width: 100%; }
+    .drawer-note {
+      font-size: 11px;
+      color: #888;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    .toast-demo {
+      position: fixed;
+      top: 56px;
+      right: 20px;
+      background: #166534;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-top: 28px;
+      font-size: 12px;
+      line-height: 1.8;
+      color: #1e40af;
+    }
+    .legend h3 { font-size: 14px; margin-bottom: 8px; }
+    .legend ul { padding-left: 18px; }
+    .legend li { margin-bottom: 4px; }
+
+    .admin-mini {
+      background: linear-gradient(135deg, #fffbeb, #ffedd5);
+      border: 2px solid #d97706;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="mockup-banner" contenteditable="false">
+  <div>
+    <strong>v2.0a 交互草图</strong>
+    <span class="mockup-tag">仅预览 · 未接真实数据</span>
+  </div>
+  <button type="button" class="edit-toggle" id="edit-toggle" contenteditable="false">编辑文字：关</button>
+</div>
+
+<div class="toast-demo" contenteditable="false" id="toast">
+  ✓ 已保存到云端（Toast 示例，3 秒后消失）
+</div>
+
+<div class="page">
+  <div class="editable-region" data-editable="main">
+    <h1>港股打新统计系统</h1>
+    <p class="subtitle">v2.0a 推荐方案：Tab 导航 + 固定保存条 + 账户下拉 + 侧栏编辑</p>
+  </div>
+
+  <div class="admin-mini" contenteditable="false">
+    <strong>管理员</strong> 已开启编辑 ·
+    <button type="button" class="btn btn-sm btn-secondary" contenteditable="false">退出</button>
+    <button type="button" class="btn btn-sm btn-ghost" contenteditable="false">下载云端 JSON 备份</button>
+  </div>
+
+  <!-- ① 固定保存状态条 -->
+  <div class="save-bar dirty" contenteditable="false" id="save-bar">
+    <div class="save-status">
+      <span class="dot-warn"></span>
+      <strong>有未保存修改</strong>（本地已自动备份）· 上次云端：2026-05-20 15:28
+    </div>
+    <button type="button" class="btn btn-primary" contenteditable="false">保存到云端</button>
+    <button type="button" class="btn btn-ghost" contenteditable="false">放弃本地修改</button>
+  </div>
+
+  <div class="summary-grid editable-region" data-editable="main">
+    <div class="card"><div class="card-label">参与项目</div><div class="card-value blue">2</div></div>
+    <div class="card"><div class="card-label">总投入</div><div class="card-value">HKD 248K</div></div>
+    <div class="card"><div class="card-label">余额</div><div class="card-value">HKD 251K</div></div>
+    <div class="card"><div class="card-label">中签率</div><div class="card-value">—</div></div>
+    <div class="card"><div class="card-label">总利润</div><div class="card-value green">HKD -715</div></div>
+  </div>
+
+  <!-- Tab 导航 -->
+  <nav class="tabs" contenteditable="false" role="tablist">
+    <button type="button" class="tab" data-tab="persons">① 账户</button>
+    <button type="button" class="tab active" data-tab="capital">② 资金统计 <span class="badge">主</span></button>
+    <button type="button" class="tab" data-tab="detail">③ 中签明细</button>
+    <button type="button" class="tab" data-tab="funders">④ 出资方</button>
+    <button type="button" class="tab" data-tab="dist">⑤ 利润汇总</button>
+  </nav>
+
+  <!-- 面板：资金统计（默认） -->
+  <section class="panel active" id="panel-capital">
+    <div class="section-head editable-region" data-editable="main">
+      <div class="section-title"><span class="dot"></span>资金统计</div>
+      <span class="new-pill">v2 默认展开</span>
+    </div>
+
+    <div class="help-collapsed editable-region" data-editable="main">
+      中签：TGE − 手数×每手 − 手续费；未中签：余额 − 初始资金
+      <button type="button" contenteditable="false" onclick="document.getElementById('help-exp').classList.toggle('show')">详细说明 ▾</button>
+    </div>
+    <div class="help-expanded" id="help-exp" contenteditable="false">
+      未填 TGE 时可手填利润。先选统计日期再添加。点击日期分组标题可收起。保存到云端后他人可见。
+    </div>
+
+    <div class="date-chips" contenteditable="false">
+      <button type="button" class="chip active">今天 05-20</button>
+      <button type="button" class="chip">昨天 05-19</button>
+      <button type="button" class="chip">05-18 驱势科技</button>
+      <button type="button" class="chip">05-15 翼菲科技</button>
+    </div>
+
+    <button type="button" class="batch-toggle" contenteditable="false">
+      ＋ 批量添加（同一日期 + 项目，勾选多个账户）— v2.0c 可二期
+    </button>
+
+    <div class="form-card" contenteditable="false">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">统计日期</label>
+          <input type="date" value="2026-05-18">
+        </div>
+        <div class="form-group">
+          <label class="form-label">项目</label>
+          <input type="text" value="驱势科技" list="projects">
+          <datalist id="projects">
+            <option value="驱势科技">
+            <option value="翼菲科技">
+          </datalist>
+          <span class="datalist-hint">↑ 历史项目联想</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">账户</label>
+          <input type="text" value="志坚" list="accounts">
+          <datalist id="accounts">
+            <option value="志坚"><option value="李超"><option value="小雪">
+            <option value="均哥1"><option value="维维">
+          </datalist>
+          <span class="datalist-hint">↑ 从账户库下拉</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">结果</label>
+          <select><option>未中签</option><option>中签</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">初始资金</label>
+          <input type="number" value="9950">
+        </div>
+        <div class="form-group">
+          <label class="form-label">账户余额</label>
+          <input type="number" value="9900">
+        </div>
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <button type="button" class="btn btn-primary">添加一行</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout-with-drawer">
+      <div class="table-wrap" contenteditable="false">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>项目</th><th>账户</th><th>结果</th><th>利润</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="selected" onclick="document.getElementById('drawer').style.display='block'">
+              <td>1</td><td>驱势科技</td><td>维维</td>
+              <td><span class="badge-green">中签</span></td><td>HKD -65</td>
+              <td><button type="button" class="btn btn-sm" style="background:#e0e7ff;color:#3730a3">编辑</button></td>
+            </tr>
+            <tr>
+              <td>2</td><td>驱势科技</td><td>志坚</td>
+              <td><span class="badge-gray">未中签</span></td><td>HKD -50</td>
+              <td><button type="button" class="btn btn-sm" style="background:#e0e7ff;color:#3730a3">编辑</button></td>
+            </tr>
+            <tr>
+              <td>3</td><td>翼菲科技</td><td>Reaper</td>
+              <td><span class="badge-gray">未中签</span></td><td>HKD -50</td>
+              <td><button type="button" class="btn btn-sm" style="background:#e0e7ff;color:#3730a3">编辑</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="padding:12px 14px;font-size:12px;color:#888">点击行 → 右侧滑出编辑（无需滚回页顶）</p>
+      </div>
+
+      <!-- 侧栏编辑 -->
+      <aside class="drawer" id="drawer" contenteditable="false">
+        <div class="drawer-title">编辑：驱势科技 · 维维</div>
+        <div class="form-group">
+          <label class="form-label">结果</label>
+          <select><option selected>中签</option><option>未中签</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">中签手数</label>
+          <input type="number" value="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">TGE价值</label>
+          <input type="number" placeholder="可选">
+        </div>
+        <div class="form-group">
+          <label class="form-label">手续费</label>
+          <input type="number" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">利润</label>
+          <input type="number" value="-65">
+        </div>
+        <button type="button" class="btn btn-primary" style="width:100%;margin-top:8px">保存修改</button>
+        <button type="button" class="btn btn-ghost" style="width:100%;margin-top:6px">取消</button>
+        <p class="drawer-note">所有字段与现版一致，仅改变编辑位置。</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-persons">
+    <div class="section-title editable-region" data-editable="main"><span class="dot"></span>账户信息汇总</div>
+    <p style="color:#888;font-size:13px;padding:24px;background:#fff;border-radius:12px">（草图占位）表单 + 表格与现版相同，作为下拉数据源</p>
+  </section>
+  <section class="panel" id="panel-detail">
+    <div class="section-title editable-region" data-editable="main"><span class="dot"></span>账户中签明细</div>
+    <p style="color:#888;font-size:13px;padding:24px;background:#fff;border-radius:12px">功能保留 · 账户字段同样改为下拉 · 顶部提示「可与资金统计配合使用」</p>
+  </section>
+  <section class="panel" id="panel-funders">
+    <div class="section-title editable-region" data-editable="main"><span class="dot"></span>出资方明细</div>
+    <p style="color:#888;font-size:13px;padding:24px;background:#fff;border-radius:12px">（草图占位）左哥 / 邹哥 等出资记录</p>
+  </section>
+  <section class="panel" id="panel-dist">
+    <div class="section-title editable-region" data-editable="main"><span class="dot"></span>人员利润分配汇总</div>
+    <p style="color:#888;font-size:13px;padding:24px;background:#fff;border-radius:12px">只读汇总表，放最后一个 Tab</p>
+  </section>
+
+  <div class="legend editable-region" data-editable="main">
+    <h3>v2.0a 相对现版的改动对照（供讨论）</h3>
+    <ul>
+      <li><strong>固定保存条</strong>：始终可见保存状态，降低漏保存风险</li>
+      <li><strong>Tab 分区</strong>：减少长页滚动，资金统计为默认 Tab</li>
+      <li><strong>日期快捷 chip</strong>：今天 / 昨天 / 最近有数据的日期</li>
+      <li><strong>项目联想 + 账户下拉</strong>：减少手打与错别字</li>
+      <li><strong>帮助折叠</strong>：公式说明默认一行，可展开</li>
+      <li><strong>侧栏编辑</strong>：点表格行在右侧改，不滚回顶部</li>
+      <li><strong>Toast</strong>：替代 alert 弹窗</li>
+      <li><strong>同步前 KV 备份</strong>：运维脚本改造（界面有「下载备份」入口）</li>
+      <li><strong>不删减</strong>：五个模块、全部字段、TGE/手续费/中签明细均保留</li>
+    </ul>
+    <p style="margin-top:10px"><strong>二期（v2.0c）</strong>：批量添加同一 IPO 多人</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const toggle = document.getElementById('edit-toggle');
+  const regions = document.querySelectorAll('.editable-region[data-editable="main"]');
+  let on = false;
+  toggle.addEventListener('click', function () {
+    on = !on;
+    regions.forEach(function (el) {
+      el.contentEditable = on ? 'true' : 'false';
+    });
+    toggle.textContent = '编辑文字：' + (on ? '开' : '关');
+  });
+  document.querySelectorAll('input,select,button,textarea').forEach(function (el) {
+    el.setAttribute('contenteditable', 'false');
+  });
+  document.querySelectorAll('.tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      var id = 'panel-' + tab.getAttribute('data-tab');
+      var panel = document.getElementById(id);
+      if (panel) panel.classList.add('active');
+    });
+  });
+  setTimeout(function () {
+    var toast = document.getElementById('toast');
+    if (toast) toast.style.display = 'none';
+  }, 4000);
+})();
+</script>
+</body>
+</html>
