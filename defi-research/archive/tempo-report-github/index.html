@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tempo 项目调研 · 可视化简报</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #161c1a;
+      --text: #f7f7f4;
+      --text-soft: rgba(247, 247, 244, 0.72);
+      --text-faint: rgba(247, 247, 244, 0.48);
+      --line: rgba(255, 255, 255, 0.22);
+      --line-strong: rgba(255, 255, 255, 0.38);
+      --chart-1: #8fa9a0;
+      --chart-2: #7a8fa3;
+      --chart-3: #9a9688;
+      --chart-4: #6d8078;
+      --chart-5: #a8b4bc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      color: var(--text-soft);
+      line-height: 1.65;
+      background: var(--bg-deep);
+    }
+    /* 底图 tempo-report-bg.png + 深色渐变压亮部，保证浅色正文可读 */
+    .atmosphere {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background-color: #141a1e;
+      background-image:
+        linear-gradient(
+          rgba(18, 24, 28, 0.78) 0%,
+          rgba(14, 18, 22, 0.86) 42%,
+          rgba(10, 14, 18, 0.94) 100%
+        ),
+        url("tempo-report-bg.png");
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+    }
+    @media (min-width: 900px) {
+      .atmosphere {
+        background-attachment: fixed;
+      }
+    }
+    .grain {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+    }
+    .wrap {
+      position: relative;
+      z-index: 2;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 72px 32px 96px;
+    }
+    /* 顶栏：左侧副标题 + 右侧 Tempo wordmark（黑标反色适配深色页） */
+    .brand-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+    .brand-row .eyebrow {
+      margin-bottom: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    .brand-link {
+      flex-shrink: 0;
+      border: none !important;
+      align-self: center;
+      line-height: 0;
+      opacity: 0.95;
+    }
+    .brand-link:hover {
+      opacity: 1;
+      border-bottom: none !important;
+    }
+    .brand-mark {
+      height: 120px;
+      width: auto;
+      display: block;
+      filter: invert(1);
+    }
+    .eyebrow {
+      font-family: "Source Sans 3", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+      font-size: clamp(2.75rem, 7vw, 3.75rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin: 0 0 28px;
+      line-height: 1.08;
+      max-width: 14ch;
+    }
+    h2 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.5rem, 3vw, 1.85rem);
+      font-weight: 400;
+      color: var(--text);
+      margin: 56px 0 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      letter-spacing: 0.01em;
+    }
+    h3 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--text);
+      margin: 32px 0 12px;
+    }
+    p { margin: 0 0 1.1em; max-width: 62ch; }
+    p.lead {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      line-height: 1.55;
+      color: var(--text-soft);
+      margin-bottom: 40px;
+    }
+    strong { color: var(--text); font-weight: 500; }
+    a {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line-strong);
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    a:hover {
+      border-bottom-color: var(--text);
+      color: #fff;
+    }
+    .callout {
+      border: none;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 22px 0;
+      margin: 36px 0;
+      background: transparent;
+    }
+    .callout strong {
+      display: block;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.15rem;
+      font-weight: 500;
+      margin-bottom: 10px;
+      letter-spacing: 0.02em;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      margin: 40px 0 48px;
+      border-top: 1px solid var(--line);
+    }
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: 1fr; }
+    }
+    .stat {
+      padding: 24px 20px 28px;
+      border: none;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+    }
+    @media (min-width: 641px) {
+      .stat { border-right: 1px solid var(--line); }
+      .stat:last-child { border-right: none; }
+    }
+    .stat .v {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.65rem;
+      font-weight: 400;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .stat .l {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--text-faint);
+      margin-top: 10px;
+      letter-spacing: 0.02em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      font-weight: 300;
+      margin: 16px 0 28px;
+    }
+    th, td {
+      border: none;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 0;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-family: "Source Sans 3", sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      background: transparent;
+    }
+    td { color: var(--text-soft); background: transparent; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin: 24px 0;
+    }
+    @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; gap: 32px; } }
+    .chart-cap { font-size: 14px; font-weight: 300; color: var(--text-faint); margin: 8px 0 16px; }
+    .chart-note { font-size: 13px; font-weight: 300; color: var(--text-faint); margin-top: 12px; }
+    .usage {
+      display: flex;
+      height: 2px;
+      margin: 20px 0 12px;
+      background: transparent;
+      border-bottom: 1px solid var(--line);
+      align-items: flex-end;
+      gap: 1px;
+    }
+    .usage span { display: block; height: 6px; opacity: 0.85; }
+    .usage-legend { font-size: 13px; font-weight: 300; color: var(--text-faint); }
+    .cols-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+    }
+    @media (max-width: 640px) { .cols-2 { grid-template-columns: 1fr; } }
+    .foot {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      color: var(--text-faint);
+    }
+    @media print {
+      .atmosphere,
+      .grain {
+        display: none;
+      }
+      body {
+        background: #fff;
+        color: #333;
+      }
+      :root {
+        --text: #1a1a1a;
+        --text-soft: #444;
+        --text-faint: #666;
+        --line: #ccc;
+        --line-strong: #999;
+        --chart-1: #5c6d66;
+        --chart-2: #5a6a7a;
+        --chart-3: #6d6a62;
+        --chart-4: #4a5c56;
+        --chart-5: #7a858c;
+      }
+      .wrap { padding: 24px; max-width: 100%; }
+      a { color: #1a1a1a; border-color: #999; }
+      .brand-mark {
+        filter: none;
+      }
+      .brand-link {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="brand-row">
+      <p class="eyebrow">Research brief · Stablecoin / payments L1</p>
+      <a class="brand-link" href="https://tempo.xyz/" target="_blank" rel="noopener noreferrer" aria-label="Tempo 官网">
+        <img class="brand-mark" src="tempo-wordmark.png" alt="Tempo" />
+      </a>
+    </div>
+    <h1>Tempo<br />项目调研</h1>
+    <p class="lead">
+      Tempo 是面向大规模支付的 Layer 1，由 Paradigm 与 Stripe 联合孵化，强调稳定币结算、确定性终局与支付元数据等能力。
+      官网：<a href="https://tempo.xyz/">tempo.xyz</a>
+    </p>
+
+    <div class="callout">
+      <strong>口径说明</strong>
+      下列融资与估值数字来自多家媒体的同期报道（Fortune、Blockworks 等），公司未在官网首页披露经审计的募资文件。交互建议部分为策略性归纳，非官方合作路径。
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="v">Matt Huang</div><div class="l">对外报道中的公司负责人</div></div>
+      <div class="stat"><div class="v">$500M</div><div class="l">媒体报道的 Series A 规模</div></div>
+      <div class="stat"><div class="v">~$5B</div><div class="l">媒体报道的投后估值区间</div></div>
+    </div>
+
+    <h2>一、创始人与核心团队（公开信息）</h2>
+    <p>「创始人」在公开叙事中更多体现为<strong>孵化方核心人物 + 公司运营负责人</strong>的组合，而非传统单一 technical founder 叙事。</p>
+    <table>
+      <thead><tr><th>角色</th><th>人物</th><th>背景要点</th></tr></thead>
+      <tbody>
+        <tr><td>公司领导（报道）</td><td>Matt Huang</td><td>Paradigm 联合创始人兼管理合伙人；多篇文章称其为 Tempo 团队负责人 / CEO 语境下的核心领导者。</td></tr>
+        <tr><td>增长与市场（报道）</td><td>Dan Romero</td><td>CoinDesk 等报道称其为 Tempo 的 go-to-market 负责人，曾联合创办 Farcaster。</td></tr>
+        <tr><td>孵化方（机构）</td><td>Paradigm / Stripe</td><td>项目由两家机构联合孵化；Stripe 在稳定币与支付基础设施上持续加码（含对 Bridge 等布局的行业背景）。</td></tr>
+      </tbody>
+    </table>
+    <p class="chart-note">
+      参考：
+      <a href="https://www.paradigm.xyz/2025/09/tempo-payments-first-blockchain">Paradigm 介绍</a> ·
+      <a href="https://fortune.com/crypto/2025/09/04/stripe-paradigm-tempo-blockchain-stablecoins-matt-huang-payments/">Fortune</a> ·
+      <a href="https://www.coindesk.com/business/2026/05/05/crypto-s-barbell-speculation-and-stablecoin-payments-drive-adoption-tempo-s-romero-says">CoinDesk（Romero）</a>
+    </p>
+
+    <h2>二、融资与资本结构（媒体报道）</h2>
+    <div class="grid-2">
+      <div>
+        <h3>关键交易指标</h3>
+        <p class="chart-cap">将「募资额」与「投后估值」统一为十亿美元口径，便于比较量级。</p>
+        <svg viewBox="0 0 400 120" width="100%" height="120" aria-label="Series A 与估值柱状图">
+          <text x="0" y="16" fill="rgba(247,247,244,0.45)" font-size="12" font-family="Source Sans 3, sans-serif">十亿美元</text>
+          <text x="0" y="46" fill="#f7f7f4" font-size="13" font-family="Source Sans 3, sans-serif">Series A 募资额</text>
+          <rect x="0" y="52" width="40" height="12" fill="#8fa9a0"/>
+          <text x="46" y="62" fill="rgba(247,247,244,0.75)" font-size="12" font-family="Source Sans 3, sans-serif">0.5</text>
+          <text x="0" y="88" fill="#f7f7f4" font-size="13" font-family="Source Sans 3, sans-serif">投后估值（报道）</text>
+          <rect x="0" y="94" width="400" height="12" fill="#7a8fa3"/>
+          <text x="0" y="116" fill="rgba(247,247,244,0.4)" font-size="11" font-family="Source Sans 3, sans-serif">比例尺：满宽约 5B；短条为 0.5B</text>
+        </svg>
+        <p class="chart-note">来源聚合：Fortune、Blockworks、VentureBurn 等对 2025 年 10 月 Series A 的报道口径。</p>
+      </div>
+      <div>
+        <h3>投资方角色拆分</h3>
+        <p class="chart-cap">多家媒体称 Series A 由 Thrive Capital 与 Greenoaks 共同领投，另有 Sequoia、Ribbit、SV Angel 等参与；Paradigm / Stripe 的孵化角色与本轮资本关系请以报道原文为准。</p>
+        <svg viewBox="0 0 220 200" width="220" height="200" aria-label="投资方数量示意饼图">
+          <g transform="translate(110,85)">
+            <path d="M 0 -60 A 60 60 0 0 1 57.06 -18.54 L 34.24 -11.12 A 36 36 0 0 0 0 -36 Z" fill="#8fa9a0"/>
+            <path d="M 57.06 -18.54 A 60 60 0 0 1 35.27 48.54 L 21.16 29.12 A 36 36 0 0 0 34.24 -11.12 Z" fill="#7a8fa3"/>
+            <path d="M 35.27 48.54 A 60 60 0 0 1 -35.27 48.54 L -21.16 29.12 A 36 36 0 0 0 21.16 29.12 Z" fill="#9a9688"/>
+            <path d="M -35.27 48.54 A 60 60 0 0 1 -57.06 -18.54 L -34.24 -11.12 A 36 36 0 0 0 -21.16 29.12 Z" fill="#6d8078"/>
+            <path d="M -57.06 -18.54 A 60 60 0 0 1 0 -60 L 0 -36 A 36 36 0 0 0 -34.24 -11.12 Z" fill="#a8b4bc"/>
+          </g>
+          <circle cx="110" cy="85" r="28" fill="#1a2320"/>
+          <text x="110" y="168" text-anchor="middle" fill="rgba(247,247,244,0.45)" font-size="11" font-family="Source Sans 3, sans-serif">五类机构投资方（等分示意）</text>
+        </svg>
+        <p class="chart-note">饼图仅表示「机构投资方类别数量」示意，非资金分配比例。色块顺序：Thrive、Greenoaks、Sequoia、Ribbit、SV Angel。</p>
+      </div>
+    </div>
+
+    <h3>VC 与战略方图谱（文字）</h3>
+    <table>
+      <thead><tr><th>类型</th><th>机构</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>孵化 / 生态背书</td><td>Paradigm、Stripe</td><td>品牌、产品与支付场景网络的放大器；与「支付公司做链」叙事强绑定。</td></tr>
+        <tr><td>媒体报道的 Series A 领投</td><td>Thrive Capital、Greenoaks</td><td>美元基金与成长期科技投资中的高频名字，利于后续人才引进与资本市场叙事。</td></tr>
+        <tr><td>媒体报道的跟投</td><td>Sequoia、Ribbit Capital、SV Angel</td><td>加密与传统交叉赛道常见配置，强化「顶级风投包」信号。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>三、产品叙事与官网能力轴</h2>
+    <p class="chart-cap">下列方向与 tempo.xyz 首页「Performant &amp; scalable for any payments flow」等板块一致，便于你对照自身业务（清结算、合规、钱包、收单）寻找切入点。</p>
+    <table>
+      <thead><tr><th>场景方向</th><th>与你交互时的典型问题</th></tr></thead>
+      <tbody>
+        <tr><td>跨境汇款</td><td>成本、时效、合规报文与链上 memo 如何对齐？</td></tr>
+        <tr><td>全球打款</td><td>多币种稳定币、流动性与收款方 KYC 边界？</td></tr>
+        <tr><td>薪酬</td><td>批量发放、税务辖区与资金托管模式？</td></tr>
+        <tr><td>嵌入式金融</td><td>API / SDK 成熟度、白标钱包与责任划分？</td></tr>
+        <tr><td>微支付</td><td>费率模型、最小金额与反洗钱阈值？</td></tr>
+        <tr><td>智能体支付</td><td>机器主体授权、限额与撤销机制？</td></tr>
+        <tr><td>代币化存款</td><td>银行资产负债表口径与链上证明？</td></tr>
+      </tbody>
+    </table>
+
+    <h2>四、合理的「交互方式」建议</h2>
+    <p>
+      以下按 <a href="https://docs.tempo.xyz/">Tempo 官方文档</a> 的公开路径整理，适合作为<strong>「先按文档真实使用链，再考虑是否长期建设」</strong>的交互清单。
+      若你带有<strong>未来若发币、是否存在追溯激励</strong>的预期，请先阅读本节末尾的<strong>信息边界</strong>：文档未承诺代币或空投，历史上各公链规则差异极大，链上行为也不等于任何权益。
+    </p>
+
+    <h3>建议精力分配（偏「按文档走一遍」）</h3>
+    <p class="chart-cap" style="margin-bottom: 6px">以官方文档为主线 <span style="float: right; opacity: 0.7">100%</span></p>
+    <div class="usage" title="文档25% 测试网35% 主网钱包与支付25% 可选开发15%">
+      <span style="width:25%;background:var(--chart-2)"></span>
+      <span style="width:35%;background:var(--chart-1)"></span>
+      <span style="width:25%;background:var(--chart-3)"></span>
+      <span style="width:15%;background:var(--chart-5)"></span>
+    </div>
+    <p class="usage-legend">读文档与接网络 25% · 测试网领水与转账 35% · 主网钱包与支付流 25% · 可选：合约 / 集成 / Agentic 15%</p>
+
+    <h3>按文档侧栏逐项覆盖（与 docs 左侧导航一致）</h3>
+    <p class="chart-cap">
+      下列两表对应 <a href="https://docs.tempo.xyz/">docs.tempo.xyz</a> 侧栏中的 <strong>Build on Tempo</strong> 与 <strong>Integrate Tempo</strong> 全部子项（你截图红框范围）；右侧为可执行的阅读/链上动作，便于按菜单顺序自检是否已走通。
+    </p>
+
+    <h3 style="margin-top: 28px; font-size: 1.05rem">Build on Tempo</h3>
+    <table>
+      <thead><tr><th>文档页面</th><th>建议动作</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Getting Funds on Tempo</strong></td>
+          <td>弄清主网/测试网资金来源与限制；与 <strong>Get Testnet Faucet Funds</strong>、<strong>Bridging</strong> 交叉阅读后再动账，避免误操作主网资金。</td>
+        </tr>
+        <tr>
+          <td><strong>Create &amp; Use Accounts</strong></td>
+          <td>按文档完成账户创建与日常使用路径；理解智能账户/权限模型（若有），为后续支付与集成打基础。</td>
+        </tr>
+        <tr>
+          <td><strong>Make Payments</strong></td>
+          <td>走通普通转账、memo、费用赞助等支付流；与 <strong>Use Tempo Transactions</strong> 中的交易类型能力对照，确保钱包或脚本发的是文档支持的类型。</td>
+        </tr>
+        <tr>
+          <td><strong>Private Transactions</strong></td>
+          <td>阅读隐私功能的适用场景、合规与可用性说明；仅在文档允许的路径下尝试，不假设与主网默认转账相同。</td>
+        </tr>
+        <tr>
+          <td><strong>Issue Stablecoins</strong></td>
+          <td>理解发行流程与角色前提；优先在测试网或文档明示的安全环境演练，再评估主网发行涉及的法律与对手方风险。</td>
+        </tr>
+        <tr>
+          <td><strong>Exchange Stablecoins</strong></td>
+          <td>按文档完成稳定币兑换/流动性相关交互（若对 DEX 或池子有说明），熟悉报价、滑点与代币列表来源（可与 Token List Registry 对照）。</td>
+        </tr>
+        <tr>
+          <td><strong>Make Agentic Payments</strong></td>
+          <td>阅读机器支付/会话或流式支付等协议说明，跑通文档中的最小示例，形成与「代理支付」叙事一致的链上记录（若有测试环境优先）。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top: 28px; font-size: 1.05rem">Integrate Tempo</h3>
+    <table>
+      <thead><tr><th>文档页面</th><th>建议动作</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Overview</strong></td>
+          <td>先通读集成总览，建立「连接网络 → 领水/资金 → 发 Tempo 交易 → 部署/验证」的整体路线图，再深入子页。</td>
+        </tr>
+        <tr>
+          <td><strong>Connect to the Network</strong></td>
+          <td>在钱包或节点中配置 RPC、链 ID、浏览器等；保存官方参数来源，避免使用不明第三方端点。</td>
+        </tr>
+        <tr>
+          <td><strong>Use Tempo Transactions</strong></td>
+          <td>
+            重点阅读文档对 <strong>EIP-2718 类 Tempo 交易类型</strong>的说明；关注 <strong>可配置费用代币（如美元计价的 TIP-20 作 gas）</strong>、<strong>费用赞助（代付 gas）</strong>、<strong>批量调用（batch）</strong>、<strong>访问密钥（委托签名）</strong>等能力，并在测试网用钱包或脚本各走通至少一条与自身场景相关的路径。
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Get Testnet Faucet Funds</strong></td>
+          <td>领取测试代币后，刻意覆盖不同交易形态（普通转、带 memo、赞助费、批量等），与上文 Tempo Transactions 文档交叉验证。</td>
+        </tr>
+        <tr>
+          <td><strong>EVM Differences</strong></td>
+          <td>逐项对照以太坊开发习惯与 Tempo 差异（预编译、opcode、费用、交易类型等），减少「能部署但发不出交易」的无效交互。</td>
+        </tr>
+        <tr>
+          <td><strong>Predeployed Contracts</strong></td>
+          <td>熟悉链上预部署合约地址与用途；集成或调用时优先使用文档列出的标准入口，避免硬编码未文档化的地址。</td>
+        </tr>
+        <tr>
+          <td><strong>Token List Registry</strong></td>
+          <td>理解官方或社区代币列表的注册与拉取方式；支付/兑换前核对代币元数据与精度，防止错误授权或假币。</td>
+        </tr>
+        <tr>
+          <td><strong>Wallet Developers</strong></td>
+          <td>若你维护钱包：按钱包开发者指南接入 Tempo 交易类型、费用代币与赞助逻辑；否则可略读以理解钱包端能力边界。</td>
+        </tr>
+        <tr>
+          <td><strong>Contract Verification</strong></td>
+          <td>若有部署合约：按文档完成验证，便于他人审计与你自己复盘；亦有助于形成「开发者型」链上/索引痕迹（仍无空投保证）。</td>
+        </tr>
+        <tr>
+          <td><strong>Bridging</strong></td>
+          <td>在理解桥接资产类型与终局时间的前提下，按文档完成一次跨链入金/出金（注意手续费与流动性）；与 Getting Funds 章节一起读。</td>
+        </tr>
+        <tr>
+          <td><strong>Ecosystem</strong></td>
+          <td>浏览生态项目与工具清单，挑选 1～2 个与支付场景相关的应用做真实试用，避免只与裸链交互而完全脱离生态。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cols-2">
+      <div>
+        <h3>与「空投预期」相关的理性策略</h3>
+        <p>1. <strong>优先可解释性</strong>：链上足迹若能对应「真实用户或开发者行为」（钱包、测试网探索、主网支付、小型集成），比大量同质、短时间窗口的机械重复更经得起事后规则筛选（若有）。</p>
+        <p>2. <strong>控制成本与合规</strong>：主网行为涉及真实资金与税务/合规；测试网亦应遵守水龙头与社区规则。多号、自动化刷量可能触发反女巫或违反条款，且与文档倡导的支付场景无关。</p>
+        <p class="chart-note">文档入口：<a href="https://docs.tempo.xyz/">docs.tempo.xyz</a>；上表已覆盖侧栏红框内 <strong>Build on Tempo</strong> 与 <strong>Integrate Tempo</strong> 全部子项。侧栏更下方的 <strong>Protocol Specs</strong>、<strong>TIPs</strong>、<strong>Tempo Developer Tools</strong>（Accounts SDK、CLI、RPC、Run a Node 等）建议按你的角色再向下钻。</p>
+      </div>
+      <div>
+        <h3>不建议的做法</h3>
+        <p>3. 不要把「交互次数」当作唯一 KPI；文档未公开的权重若存在，你无法从外部可靠推断。</p>
+        <p>4. 不要假设「发币 / 空投」必然发生；官方路径是产品与支付网络建设，代币化若发生应以官方披露为准。</p>
+        <p class="chart-note">官网其它入口：<a href="https://tempo.xyz/">tempo.xyz</a>（Wallet、Blog、Ecosystem 等）可作补充，与文档交叉核对。</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>风险与信息边界</strong>
+      公链支付项目受监管、银行合作、稳定币发行方策略等多层因素影响；本简报不构成投资建议。大额合作请以法务、合规与对方官方披露为准。
+      <strong style="display: block; margin-top: 12px">关于代币与空投</strong>
+      Tempo 官方文档（<a href="https://docs.tempo.xyz/">docs.tempo.xyz</a>）以产品与协议说明为主，<strong>未承诺</strong>未来是否发币、是否对链上行为或测试网参与进行任何形式的追溯分配；市场传闻不构成依据。请勿投入超出承受能力的资金或时间成本。
+    </div>
+
+    <p class="foot">
+      生成日期：2026-05-14 · 主要公开来源：tempo.xyz、<a href="https://docs.tempo.xyz/">docs.tempo.xyz</a>、Paradigm 博客、Fortune、The Block、Blockworks、CoinDesk。
+      <br />背景图 <code style="font-size: inherit">tempo-report-bg.png</code>、品牌字标 <code style="font-size: inherit">tempo-wordmark.png</code> 与 HTML 同目录。
+      <br />打印：浏览器「打印」→「存储为 PDF」。首次打开需联网加载 Google Fonts；断网时回退为系统衬线。
+    </p>
+  </div>
+</body>
+</html>

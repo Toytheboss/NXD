@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>港股打新统计系统</title>
+  <style>
+    /* ── 密码锁屏 ── */
+    #lock-screen {
+      position: fixed; inset: 0;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #lock-screen.hidden { display: none; }
+    .lock-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 48px 48px 40px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.4);
+    }
+    .lock-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    .lock-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+    .lock-sub {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 28px;
+    }
+    .lock-input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+      letter-spacing: 4px;
+      text-align: center;
+      outline: none;
+      transition: border 0.15s;
+      margin-bottom: 16px;
+    }
+    .lock-input:focus { border-color: #d97706; }
+    .lock-input.error { border-color: #dc2626; animation: shake 0.3s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+    .lock-btn {
+      width: 100%;
+      padding: 13px;
+      background: #d97706;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .lock-btn:hover { opacity: 0.88; }
+    .lock-err {
+      font-size: 12px;
+      color: #dc2626;
+      margin-top: 12px;
+      min-height: 18px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f5f5f0;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: #1a1a1a;
+      padding: 40px 32px;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    /* ── 汇总卡片 ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .card-label {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+    .card-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .card-value.green { color: #16a34a; }
+    .card-value.blue  { color: #2563eb; }
+    .card-value.orange { color: #d97706; }
+
+    /* ── Section 标题 ── */
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d97706;
+      display: inline-block;
+    }
+
+    /* ── 表格通用 ── */
+    .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow: auto;
+      margin-bottom: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      background: #fafafa;
+      padding: 13px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #888;
+      border-bottom: 1px solid #eee;
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 13px 16px;
+      border-bottom: 1px solid #f3f3f3;
+      color: #333;
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green  { background: #dcfce7; color: #16a34a; }
+    .badge-gray   { background: #f3f4f6; color: #6b7280; }
+    .badge-yellow { background: #fef9c3; color: #b45309; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+
+    .profit-pos { color: #16a34a; font-weight: 600; }
+    .profit-neg { color: #dc2626; font-weight: 600; }
+    .profit-zero { color: #aaa; }
+
+    input, select {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      background: #fff;
+      transition: border 0.15s;
+    }
+    input:focus, select:focus { border-color: #d97706; }
+    input[type="number"] { width: 120px; }
+    input[type="text"]   { width: 150px; }
+    input[type="date"]   { width: 140px; }
+
+    .btn {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #d97706; color: #fff; }
+    .btn-danger  { background: #fee2e2; color: #dc2626; font-size: 12px; padding: 5px 12px; }
+    .btn-sm      { padding: 5px 12px; font-size: 12px; }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-label {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* 利润分配表 */
+    .dist-table thead th { background: #fffbeb; }
+    .total-row td { background: #f9fafb; font-weight: 700; color: #1a1a1a; }
+
+    .empty-tip {
+      text-align: center;
+      color: #ccc;
+      padding: 40px;
+      font-size: 13px;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .form-row, .btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>港股打新统计系统</h1>
+<p class="subtitle">共 13 个账户 · 自动统计打新项目、投入金额、中签率与利润分配</p>
+
+<!-- 汇总卡片 -->
+<div class="summary-grid">
+  <div class="card"><div class="card-label">参与项目数</div><div class="card-value blue" id="s-projects">0</div></div>
+  <div class="card"><div class="card-label">总投入金额（HKD）</div><div class="card-value" id="s-invest">0</div></div>
+  <div class="card"><div class="card-label">中签次数</div><div class="card-value orange" id="s-hits">0</div></div>
+  <div class="card"><div class="card-label">中签率</div><div class="card-value orange" id="s-rate">0%</div></div>
+  <div class="card"><div class="card-label">总利润（HKD）</div><div class="card-value green" id="s-profit">0</div></div>
+</div>
+
+<!-- ① 账户信息汇总 -->
+<div class="section-title"><span class="dot"></span>账户信息汇总</div>
+<div class="form-row">
+  <div class="form-group">
+    <div class="form-label">姓名</div>
+    <input type="text" id="p-name" placeholder="张三">
+  </div>
+  <div class="form-group">
+    <div class="form-label">券商/平台</div>
+    <input type="text" id="p-broker" placeholder="富途 / 老虎 / 辉立…">
+  </div>
+  <div class="form-group">
+    <div class="form-label">账户类型</div>
+    <select id="p-type">
+      <option value="自有">自有</option>
+      <option value="借用">借用</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">备注</div>
+    <input type="text" id="p-note" placeholder="可选" style="width:160px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button class="btn btn-primary" onclick="addPerson()">添加人员</button>
+  </div>
+</div>
+<div class="table-wrap" style="margin-bottom:40px">
+  <table id="person-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>姓名</th>
+        <th>券商/平台</th>
+        <th>账户类型</th>
+        <th>备注</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="person-body">
+      <tr><td colspan="6" class="empty-tip">暂无账户信息，请添加</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ② 添加打新记录 -->
+<div class="section-title"><span class="dot"></span>添加打新记录</div>
+<div class="form-row">
+  <div class="form-group">
+    <div class="form-label">股票名称</div>
+    <input type="text" id="f-name" placeholder="如：美团-W">
+  </div>
+  <div class="form-group">
+    <div class="form-label">股票代码</div>
+    <input type="text" id="f-code" placeholder="如：3690" style="width:100px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">认购日期</div>
+    <input type="date" id="f-date">
+  </div>
+  <div class="form-group">
+    <div class="form-label">每账户投入(HKD)</div>
+    <input type="number" id="f-invest" placeholder="10000">
+  </div>
+  <div class="form-group">
+    <div class="form-label">参与账户数</div>
+    <input type="number" id="f-accounts" placeholder="13" value="13" style="width:90px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">中签账户数</div>
+    <input type="number" id="f-hits" placeholder="0" style="width:90px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">每签获利(HKD)</div>
+    <input type="number" id="f-profit-per" placeholder="0">
+  </div>
+  <div class="form-group">
+    <div class="form-label">状态</div>
+    <select id="f-status">
+      <option value="认购中">认购中</option>
+      <option value="等待结果">等待结果</option>
+      <option value="已中签">已中签</option>
+      <option value="未中签">未中签</option>
+      <option value="已退款">已退款</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button class="btn btn-primary" onclick="addIPO()">添加记录</button>
+  </div>
+</div>
+
+<!-- ③ 打新项目总表 -->
+<div class="section-title"><span class="dot"></span>打新项目总表</div>
+<div class="table-wrap">
+  <table id="ipo-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>股票名称</th>
+        <th>代码</th>
+        <th>认购日期</th>
+        <th>每账户投入</th>
+        <th>参与账户</th>
+        <th>总投入</th>
+        <th>中签账户</th>
+        <th>中签率</th>
+        <th>每签获利</th>
+        <th>总利润</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="ipo-body">
+      <tr><td colspan="13" class="empty-tip">暂无记录，请添加打新项目</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ④ 出资方明细 -->
+<div class="section-title"><span class="dot"></span>出资方明细</div>
+<div class="form-row">
+  <div class="form-group">
+    <div class="form-label">选择项目</div>
+    <select id="fn-ipo" style="width:180px"></select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">出资方姓名</div>
+    <input type="text" id="fn-name" placeholder="如：Roy">
+  </div>
+  <div class="form-group">
+    <div class="form-label">出资金额(HKD)</div>
+    <input type="number" id="fn-amount" placeholder="50000">
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button class="btn btn-primary" onclick="addFunder()">添加出资</button>
+  </div>
+</div>
+<div class="table-wrap">
+  <table id="funder-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>项目</th>
+        <th>出资方</th>
+        <th>出资金额(HKD)</th>
+        <th>利润分配(HKD)</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="funder-body">
+      <tr><td colspan="6" class="empty-tip">暂无出资记录，请添加</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ⑤ 账户中签明细 -->
+<div class="section-title"><span class="dot"></span>账户中签明细</div>
+<div class="form-row">
+  <div class="form-group">
+    <div class="form-label">选择项目</div>
+    <select id="d-ipo" style="width:180px"></select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">账户姓名</div>
+    <input type="text" id="d-name" placeholder="姓名">
+  </div>
+  <div class="form-group">
+    <div class="form-label">打新金额(HKD)</div>
+    <input type="number" id="d-amount" placeholder="10000">
+  </div>
+  <div class="form-group">
+    <div class="form-label">中签手数</div>
+    <input type="number" id="d-lots" placeholder="1" style="width:90px">
+  </div>
+  <div class="form-group">
+    <div class="form-label">状态</div>
+    <select id="d-status">
+      <option value="中签">中签</option>
+      <option value="未中签">未中签</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <div class="form-label">&nbsp;</div>
+    <button class="btn btn-primary" onclick="addDetail()">添加明细</button>
+  </div>
+</div>
+<div class="table-wrap">
+  <table id="detail-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>项目</th>
+        <th>账户姓名</th>
+        <th>打新金额(HKD)</th>
+        <th>中签手数</th>
+        <th>获利(HKD)</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="detail-body">
+      <tr><td colspan="8" class="empty-tip">暂无中签明细</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ⑥ 人员利润分配汇总 -->
+<div class="section-title"><span class="dot"></span>人员利润分配汇总</div>
+<div class="table-wrap">
+  <table id="dist-table" class="dist-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>账户姓名</th>
+        <th>参与项目数</th>
+        <th>总投入(HKD)</th>
+        <th>中签次数</th>
+        <th>中签手数</th>
+        <th>总获利(HKD)</th>
+        <th>投资回报率</th>
+      </tr>
+    </thead>
+    <tbody id="dist-body">
+      <tr><td colspan="8" class="empty-tip">添加账户明细后自动汇总</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  let ipos = [];
+  let details = [];
+
+  const statusBadge = {
+    '认购中':   'badge-yellow',
+    '等待结果': 'badge-yellow',
+    '已中签':   'badge-green',
+    '未中签':   'badge-gray',
+    '已退款':   'badge-gray',
+    '中签':     'badge-green',
+    '未中签':   'badge-gray',
+  };
+
+  function fmt(n) {
+    return Number(n).toLocaleString('zh-HK', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  }
+
+  function addIPO() {
+    const name   = document.getElementById('f-name').value.trim();
+    const code   = document.getElementById('f-code').value.trim();
+    const date   = document.getElementById('f-date').value;
+    const invest = parseFloat(document.getElementById('f-invest').value) || 0;
+    const accs   = parseInt(document.getElementById('f-accounts').value) || 13;
+    const hits   = parseInt(document.getElementById('f-hits').value) || 0;
+    const profit = parseFloat(document.getElementById('f-profit-per').value) || 0;
+    const status = document.getElementById('f-status').value;
+    if (!name) { alert('请填写股票名称'); return; }
+    ipos.push({ id: Date.now(), name, code, date, invest, accs, hits, profit, status });
+    renderAll();
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-code').value = '';
+    document.getElementById('f-invest').value = '';
+    document.getElementById('f-hits').value = '';
+    document.getElementById('f-profit-per').value = '';
+  }
+
+  function addDetail() {
+    const ipoId  = document.getElementById('d-ipo').value;
+    const dname  = document.getElementById('d-name').value.trim();
+    const amount = parseFloat(document.getElementById('d-amount').value) || 0;
+    const lots   = parseInt(document.getElementById('d-lots').value) || 1;
+    const status = document.getElementById('d-status').value;
+    if (!ipoId || !dname) { alert('请选择项目并填写账户姓名'); return; }
+    const ipo = ipos.find(i => i.id == ipoId);
+    const profit = ipo ? ipo.profit * lots : 0;
+    details.push({ id: Date.now(), ipoId, ipoName: ipo ? ipo.name : '', name: dname, amount, lots, profit, status });
+    renderAll();
+    document.getElementById('d-name').value = '';
+    document.getElementById('d-amount').value = '';
+    document.getElementById('d-lots').value = '';
+  }
+
+  function deleteIPO(id) {
+    ipos = ipos.filter(i => i.id !== id);
+    details = details.filter(d => d.ipoId !== id);
+    renderAll();
+  }
+
+  function deleteDetail(id) {
+    details = details.filter(d => d.id !== id);
+    renderAll();
+  }
+
+  function renderAll() {
+    renderIPOTable();
+    renderDetailTable();
+    renderDistTable();
+    renderFunderTable();
+    updateSummary();
+    updateIPOSelect();
+    updateFunderIPOSelect();
+  }
+
+  function renderIPOTable() {
+    const tbody = document.getElementById('ipo-body');
+    if (ipos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="13" class="empty-tip">暂无记录，请添加打新项目</td></tr>';
+      return;
+    }
+    tbody.innerHTML = ipos.map((ipo, i) => {
+      const total = ipo.invest * ipo.accs;
+      const totalProfit = ipo.profit * ipo.hits;
+      const rate = ipo.accs > 0 ? ((ipo.hits / ipo.accs) * 100).toFixed(1) + '%' : '0%';
+      const profitClass = totalProfit > 0 ? 'profit-pos' : totalProfit < 0 ? 'profit-neg' : 'profit-zero';
+      return `<tr>
+        <td>${i+1}</td>
+        <td><b>${ipo.name}</b></td>
+        <td style="color:#888">${ipo.code}</td>
+        <td>${ipo.date}</td>
+        <td>HKD ${fmt(ipo.invest)}</td>
+        <td>${ipo.accs}</td>
+        <td>HKD ${fmt(total)}</td>
+        <td>${ipo.hits}</td>
+        <td>${rate}</td>
+        <td>HKD ${fmt(ipo.profit)}</td>
+        <td class="${profitClass}">HKD ${fmt(totalProfit)}</td>
+        <td><span class="badge ${statusBadge[ipo.status] || 'badge-gray'}">${ipo.status}</span></td>
+        <td><button class="btn btn-danger" onclick="deleteIPO(${ipo.id})">删除</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderDetailTable() {
+    const tbody = document.getElementById('detail-body');
+    if (details.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-tip">暂无中签明细</td></tr>';
+      return;
+    }
+    tbody.innerHTML = details.map((d, i) => {
+      const profitClass = d.profit > 0 ? 'profit-pos' : d.profit < 0 ? 'profit-neg' : 'profit-zero';
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${d.ipoName}</td>
+        <td>${d.name}</td>
+        <td>${d.amount > 0 ? 'HKD ' + fmt(d.amount) : '—'}</td>
+        <td>${d.lots} 手</td>
+        <td class="${profitClass}">HKD ${fmt(d.profit)}</td>
+        <td><span class="badge ${statusBadge[d.status] || 'badge-gray'}">${d.status}</span></td>
+        <td><button class="btn btn-danger" onclick="deleteDetail(${d.id})">删除</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderDistTable() {
+    const tbody = document.getElementById('dist-body');
+    if (details.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-tip">添加账户明细后自动汇总</td></tr>';
+      return;
+    }
+    const personMap = {};
+    details.forEach(d => {
+      if (!personMap[d.name]) personMap[d.name] = { projects: new Set(), invest: 0, hitCount: 0, lots: 0, profit: 0 };
+      const p = personMap[d.name];
+      p.projects.add(d.ipoId);
+      const ipo = ipos.find(i => i.id == d.ipoId);
+      if (ipo) p.invest += ipo.invest;
+      if (d.status === '中签') { p.hitCount++; p.lots += d.lots; }
+      p.profit += d.profit;
+    });
+
+    let totalInvest = 0, totalProfit = 0;
+    const rows = Object.entries(personMap).map(([name, p], i) => {
+      const roi = p.invest > 0 ? ((p.profit / p.invest) * 100).toFixed(2) + '%' : '—';
+      const profitClass = p.profit > 0 ? 'profit-pos' : p.profit < 0 ? 'profit-neg' : 'profit-zero';
+      totalInvest += p.invest;
+      totalProfit += p.profit;
+      return `<tr>
+        <td>${i+1}</td>
+        <td><b>${name}</b></td>
+        <td>${p.projects.size}</td>
+        <td>HKD ${fmt(p.invest)}</td>
+        <td>${p.hitCount}</td>
+        <td>${p.lots} 手</td>
+        <td class="${profitClass}">HKD ${fmt(p.profit)}</td>
+        <td class="${profitClass}">${roi}</td>
+      </tr>`;
+    });
+
+    const totalROI = totalInvest > 0 ? ((totalProfit / totalInvest) * 100).toFixed(2) + '%' : '—';
+    const totalClass = totalProfit > 0 ? 'profit-pos' : totalProfit < 0 ? 'profit-neg' : 'profit-zero';
+    rows.push(`<tr class="total-row">
+      <td colspan="2">合计</td>
+      <td>—</td>
+      <td>HKD ${fmt(totalInvest)}</td>
+      <td>—</td>
+      <td>—</td>
+      <td class="${totalClass}">HKD ${fmt(totalProfit)}</td>
+      <td class="${totalClass}">${totalROI}</td>
+    </tr>`);
+
+    tbody.innerHTML = rows.join('');
+  }
+
+  function updateSummary() {
+    const totalInvest = ipos.reduce((s, i) => s + i.invest * i.accs, 0);
+    const totalHits   = ipos.reduce((s, i) => s + i.hits, 0);
+    const totalSlots  = ipos.reduce((s, i) => s + i.accs, 0);
+    const totalProfit = ipos.reduce((s, i) => s + i.profit * i.hits, 0);
+    const rate = totalSlots > 0 ? ((totalHits / totalSlots) * 100).toFixed(1) + '%' : '0%';
+    document.getElementById('s-projects').textContent = ipos.length;
+    document.getElementById('s-invest').textContent = 'HKD ' + fmt(totalInvest);
+    document.getElementById('s-hits').textContent = totalHits;
+    document.getElementById('s-rate').textContent = rate;
+    const el = document.getElementById('s-profit');
+    el.textContent = 'HKD ' + fmt(totalProfit);
+    el.className = 'card-value ' + (totalProfit >= 0 ? 'green' : 'profit-neg');
+  }
+
+  function updateIPOSelect() {
+    const sel = document.getElementById('d-ipo');
+    sel.innerHTML = ipos.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+  }
+
+  function updateFunderIPOSelect() {
+    const sel = document.getElementById('fn-ipo');
+    if (sel) sel.innerHTML = ipos.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+  }
+
+  /* ── 出资方明细 ── */
+  let funders = [];
+
+  function addFunder() {
+    const ipoId  = document.getElementById('fn-ipo').value;
+    const name   = document.getElementById('fn-name').value.trim();
+    const amount = parseFloat(document.getElementById('fn-amount').value) || 0;
+    if (!ipoId || !name) { alert('请选择项目并填写出资方姓名'); return; }
+    const ipo = ipos.find(i => i.id == ipoId);
+    funders.push({ id: Date.now(), ipoId, ipoName: ipo ? ipo.name : '', name, amount });
+    renderFunderTable();
+    document.getElementById('fn-name').value = '';
+    document.getElementById('fn-amount').value = '';
+  }
+
+  function deleteFunder(id) {
+    funders = funders.filter(f => f.id !== id);
+    renderFunderTable();
+  }
+
+  function renderFunderTable() {
+    const tbody = document.getElementById('funder-body');
+    if (funders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-tip">暂无出资记录，请添加</td></tr>';
+      return;
+    }
+    const ipoTotalMap = {};
+    funders.forEach(f => { ipoTotalMap[f.ipoId] = (ipoTotalMap[f.ipoId] || 0) + f.amount; });
+    tbody.innerHTML = funders.map((f, i) => {
+      const ipo = ipos.find(x => x.id == f.ipoId);
+      const ipoProfit = ipo ? ipo.profit * ipo.hits : 0;
+      const share = ipoTotalMap[f.ipoId] > 0 ? f.amount / ipoTotalMap[f.ipoId] : 0;
+      const profitShare = share * ipoProfit;
+      const profitClass = profitShare > 0 ? 'profit-pos' : profitShare < 0 ? 'profit-neg' : 'profit-zero';
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${f.ipoName}</td>
+        <td><b>${f.name}</b></td>
+        <td>HKD ${fmt(f.amount)}</td>
+        <td class="${profitClass}">HKD ${fmt(profitShare)}</td>
+        <td><button class="btn btn-danger" onclick="deleteFunder(${f.id})">删除</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* ── 账户信息汇总 ── */
+  let persons = [];
+
+  function addPerson() {
+    const name   = document.getElementById('p-name').value.trim();
+    const broker = document.getElementById('p-broker').value.trim();
+    const type   = document.getElementById('p-type').value;
+    const note   = document.getElementById('p-note').value.trim();
+    if (!name) { alert('请填写姓名'); return; }
+    persons.push({ id: Date.now(), name, broker, type, note });
+    renderPersonTable();
+    document.getElementById('p-name').value = '';
+    document.getElementById('p-broker').value = '';
+    document.getElementById('p-note').value = '';
+  }
+
+  function deletePerson(id) {
+    persons = persons.filter(p => p.id !== id);
+    renderPersonTable();
+  }
+
+  function renderPersonTable() {
+    const tbody = document.getElementById('person-body');
+    if (persons.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-tip">暂无账户信息，请添加</td></tr>';
+      return;
+    }
+    tbody.innerHTML = persons.map((p, i) => `<tr>
+      <td>${i+1}</td>
+      <td><b>${p.name}</b></td>
+      <td>${p.broker || '—'}</td>
+      <td><span class="badge ${p.type === '自有' ? 'badge-green' : 'badge-yellow'}">${p.type}</span></td>
+      <td>${p.note || '—'}</td>
+      <td><button class="btn btn-danger" onclick="deletePerson(${p.id})">删除</button></td>
+    </tr>`).join('');
+  }
+</script>
+<!-- 密码锁屏 -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">内部访问系统</div>
+    <div class="lock-sub">港股打新统计 · 仅限内部使用</div>
+    <input class="lock-input" type="password" id="pwd-input" placeholder="请输入访问密码" onkeydown="if(event.key==='Enter')unlock()" autofocus>
+    <button class="lock-btn" onclick="unlock()">进入系统</button>
+    <div class="lock-err" id="pwd-err"></div>
+  </div>
+</div>
+
+<script>
+  // ★ 修改这里可以更改访问密码
+  const ACCESS_PASSWORD = 'ipo2026';
+
+  function unlock() {
+    const input = document.getElementById('pwd-input');
+    const err   = document.getElementById('pwd-err');
+    if (input.value === ACCESS_PASSWORD) {
+      document.getElementById('lock-screen').classList.add('hidden');
+      sessionStorage.setItem('ipo-auth', '1');
+    } else {
+      input.classList.add('error');
+      err.textContent = '密码错误，请重试';
+      setTimeout(() => {
+        input.classList.remove('error');
+        input.value = '';
+        input.focus();
+      }, 600);
+    }
+  }
+
+  // 同一会话内不用重复输入
+  if (sessionStorage.getItem('ipo-auth') === '1') {
+    document.getElementById('lock-screen').classList.add('hidden');
+  }
+</script>
+
+</body>
+</html>
