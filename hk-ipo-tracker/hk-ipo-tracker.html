@@ -634,11 +634,11 @@
   </div>
   <div class="form-group">
     <div class="form-label">账户</div>
-    <input type="text" id="c-account" list="dl-accounts" placeholder="从账户表选择或输入" style="width:120px">
+    <input type="text" id="c-account" list="dl-accounts" placeholder="从账户表选择或输入" style="width:120px" onchange="onCapitalAccountInput('c-')" onblur="onCapitalAccountInput('c-')">
   </div>
   <div class="form-group" id="c-group-initial">
     <div class="form-label">初始资金(HKD)</div>
-    <input type="number" id="c-initial" placeholder="未中签必填；中签选填" step="any">
+    <input type="number" id="c-initial" placeholder="选账户后自动带出上次余额" step="any">
   </div>
   <div class="form-group">
     <div class="form-label">结果</div>
@@ -731,7 +731,7 @@
     <div id="drawer-panel-capital" class="drawer-panel">
       <div class="form-group"><div class="form-label">统计日期</div><input type="date" id="dw-c-date"></div>
       <div class="form-group"><div class="form-label">项目</div><input type="text" id="dw-c-project" list="dl-projects"></div>
-      <div class="form-group"><div class="form-label">账户</div><input type="text" id="dw-c-account" list="dl-accounts"></div>
+      <div class="form-group"><div class="form-label">账户</div><input type="text" id="dw-c-account" list="dl-accounts" onchange="onCapitalAccountInput('dw-c-')" onblur="onCapitalAccountInput('dw-c-')"></div>
       <div class="form-group"><div class="form-label">结果</div>
         <select id="dw-c-result" onchange="syncDrawerCapitalMode()"><option value="中签">中签</option><option value="未中签">未中签</option></select>
       </div>
@@ -1185,6 +1185,40 @@
   function initCapitalDateInput() {
     const el = document.getElementById('c-date');
     if (el && !el.value) el.value = todayDateKey();
+  }
+
+  /** 该账户最近一条资金统计的账户余额（作为本次初始/剩余资金） */
+  function latestAccountRemaining(account, excludeId) {
+    const name = (account || '').trim();
+    if (!name) return undefined;
+    let rows = capitalStats.filter((r) => (r.account || '').trim() === name);
+    if (excludeId != null) rows = rows.filter((r) => r.id !== excludeId);
+    rows.sort((a, b) => {
+      const cmp = capitalStatDateKey(b).localeCompare(capitalStatDateKey(a));
+      if (cmp !== 0) return cmp;
+      return Number(b.id) - Number(a.id);
+    });
+    if (!rows.length) return undefined;
+    const last = rows[0];
+    const ret = Number(last.returnedFund);
+    if (Number.isFinite(ret)) return ret;
+    const init = Number(last.initialFund);
+    if (Number.isFinite(init)) return init;
+    return undefined;
+  }
+
+  function onCapitalAccountInput(prefix) {
+    if (READ_ONLY) return;
+    if (prefix === 'c-' && editingCapitalId) return;
+    const excludeId = prefix === 'dw-c-' ? editingCapitalId : null;
+    const account = document.getElementById(prefix + 'account')?.value?.trim();
+    if (!account) return;
+    const remaining = latestAccountRemaining(account, excludeId);
+    if (!Number.isFinite(remaining)) return;
+    const initialEl = document.getElementById(prefix + 'initial');
+    if (!initialEl) return;
+    if (prefix === 'dw-c-' && initialEl.value.trim() !== '') return;
+    fillInput(prefix + 'initial', remaining);
   }
 
   function onCapitalGroupToggle(el) {
