@@ -634,7 +634,7 @@
   </div>
   <div class="form-group">
     <div class="form-label">账户</div>
-    <input type="text" id="c-account" list="dl-accounts" placeholder="从账户表选择或输入" style="width:120px" onchange="onCapitalAccountInput('c-')" onblur="onCapitalAccountInput('c-')">
+    <input type="text" id="c-account" list="dl-accounts" autocomplete="off" placeholder="从账户表选择或输入" style="width:120px" onchange="onCapitalAccountInput('c-')" onblur="onCapitalAccountInput('c-')">
   </div>
   <div class="form-group" id="c-group-initial">
     <div class="form-label">初始资金(HKD)</div>
@@ -731,7 +731,7 @@
     <div id="drawer-panel-capital" class="drawer-panel">
       <div class="form-group"><div class="form-label">统计日期</div><input type="date" id="dw-c-date"></div>
       <div class="form-group"><div class="form-label">项目</div><input type="text" id="dw-c-project" list="dl-projects"></div>
-      <div class="form-group"><div class="form-label">账户</div><input type="text" id="dw-c-account" list="dl-accounts" onchange="onCapitalAccountInput('dw-c-')" onblur="onCapitalAccountInput('dw-c-')"></div>
+      <div class="form-group"><div class="form-label">账户</div><input type="text" id="dw-c-account" list="dl-accounts" autocomplete="off" onchange="onCapitalAccountInput('dw-c-')" onblur="onCapitalAccountInput('dw-c-')"></div>
       <div class="form-group"><div class="form-label">结果</div>
         <select id="dw-c-result" onchange="syncDrawerCapitalMode()"><option value="中签">中签</option><option value="未中签">未中签</option></select>
       </div>
@@ -829,7 +829,8 @@
     if (!acc || !proj) return;
     const names = new Set();
     persons.forEach((p) => { if (p.name) names.add(p.name); });
-    capitalStats.forEach((r) => { if (r.account) names.add(r.account); });
+    // 账户候选项只来自账户信息汇总；历史资金记录中的旧值（可能含账号编号）
+    // 仍保留在记录里展示，但不应作为新的账户选项混入下拉框。
     const projects = new Set();
     capitalStats.forEach((r) => { if (r.project) projects.add(r.project); });
     funders.forEach((f) => { if (f.ipoName) projects.add(f.ipoName); });
